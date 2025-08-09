@@ -58,7 +58,8 @@ export const columns: ColumnDef<Client>[] = [
     enableHiding: false,
   },
   {
-    accessorKey: "name",
+    id: "name",
+    accessorFn: (row) => `${row.first_name || ""} ${row.last_name || ""} ${row.email}`.toLowerCase(),
     header: ({ column }) => {
       return (
         <Button
@@ -88,6 +89,18 @@ export const columns: ColumnDef<Client>[] = [
           </div>
         </div>
       )
+    },
+    filterFn: (row, id, value) => {
+      const searchValue = value.toLowerCase()
+      const firstName = (row.original.first_name || "").toLowerCase()
+      const lastName = (row.original.last_name || "").toLowerCase()
+      const email = (row.original.email || "").toLowerCase()
+      const company = (row.original.client_profiles?.company_name || "").toLowerCase()
+      
+      return firstName.includes(searchValue) || 
+             lastName.includes(searchValue) || 
+             email.includes(searchValue) ||
+             company.includes(searchValue)
     },
   },
   {
