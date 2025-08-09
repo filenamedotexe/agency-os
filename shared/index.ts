@@ -1,5 +1,5 @@
 // Shared Utilities Exports
-export * from './components/layout/responsive-nav'
+export * from './components/layout/app-sidebar'
 export * from './components/error-boundary'
 export * from './hooks/use-auth'
 export * from './hooks/use-supabase' 
