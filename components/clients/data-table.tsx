@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { debounce } from "@/lib/helpers"
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -29,10 +30,12 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { ChevronDown, Search, Filter, Plus } from "lucide-react"
+import { ChevronDown, Search, Filter, Plus, X } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
+import { FilterSheet } from "./filter-sheet"
+import { DataTableFacetedFilter } from "@/components/ui/data-table-faceted-filter"
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -47,6 +50,16 @@ export function ClientsDataTable<TData, TValue>({
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = React.useState({})
+  const [globalFilter, setGlobalFilter] = React.useState("")
+  const [selectedFilters, setSelectedFilters] = React.useState<{
+    industries: string[]
+    sizes: string[]
+    statuses: string[]
+  }>({
+    industries: [],
+    sizes: [],
+    statuses: [],
+  })
 
   const table = useReactTable({
     data,
@@ -67,6 +80,39 @@ export function ClientsDataTable<TData, TValue>({
     },
   })
 
+  // Debounced search handler
+  const debouncedSearch = React.useMemo(
+    () => debounce((value: string) => {
+      table.getColumn("name")?.setFilterValue(value)
+    }, 300),
+    [table]
+  )
+
+  // Filter options (in production, these would come from the data)
+  const industryOptions = [
+    { label: "Technology", value: "technology" },
+    { label: "Finance", value: "finance" },
+    { label: "Healthcare", value: "healthcare" },
+    { label: "Retail", value: "retail" },
+    { label: "Manufacturing", value: "manufacturing" },
+  ]
+
+  const sizeOptions = [
+    { label: "1-10", value: "1-10" },
+    { label: "11-50", value: "11-50" },
+    { label: "51-200", value: "51-200" },
+    { label: "201-500", value: "201-500" },
+    { label: "500+", value: "500+" },
+  ]
+
+  const statusOptions = [
+    { label: "Active", value: "active" },
+    { label: "Pending", value: "pending" },
+    { label: "Inactive", value: "inactive" },
+  ]
+
+  const isFiltered = table.getState().columnFilters.length > 0
+
   return (
     <div className="w-full">
       {/* Toolbar */}
@@ -75,20 +121,60 @@ export function ClientsDataTable<TData, TValue>({
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search by name, email, or company..."
-            value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
-            onChange={(event) =>
-              table.getColumn("name")?.setFilterValue(event.target.value)
-            }
+            value={globalFilter}
+            onChange={(event) => {
+              setGlobalFilter(event.target.value)
+              debouncedSearch(event.target.value)
+            }}
             className="pl-8"
           />
         </div>
+        
+        {/* Desktop Filters - Hidden on mobile */}
+        <div className="hidden md:flex items-center gap-2">
+          {table.getColumn("company") && (
+            <DataTableFacetedFilter
+              column={table.getColumn("company")}
+              title="Industry"
+              options={industryOptions}
+            />
+          )}
+          {table.getColumn("size") && (
+            <DataTableFacetedFilter
+              column={table.getColumn("size")}
+              title="Size"
+              options={sizeOptions}
+            />
+          )}
+          {isFiltered && (
+            <Button
+              variant="ghost"
+              onClick={() => table.resetColumnFilters()}
+              className="h-8 px-2 lg:px-3"
+            >
+              Reset
+              <X className="ml-2 h-4 w-4" />
+            </Button>
+          )}
+        </div>
+
         <div className="flex items-center gap-2 w-full sm:w-auto">
+          {/* Mobile Filter Sheet - Visible only on mobile */}
+          <div className="md:hidden">
+            <FilterSheet
+              industries={industryOptions}
+              sizes={sizeOptions}
+              statuses={statusOptions}
+              selectedFilters={selectedFilters}
+              onFiltersChange={setSelectedFilters}
+            />
+          </div>
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" className="ml-auto">
-                <Filter className="mr-2 h-4 w-4" />
+                <ChevronDown className="mr-2 h-4 w-4" />
                 View
-                <ChevronDown className="ml-2 h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
