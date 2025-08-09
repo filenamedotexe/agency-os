@@ -41,7 +41,7 @@ export default async function TeamDashboard() {
   const completedTasks = myTasks?.filter(t => t.status === "completed").length || 0
   const inProgressTasks = myTasks?.filter(t => t.status === "in_progress").length || 0
   const todoTasks = myTasks?.filter(t => t.status === "todo").length || 0
-  const overdueT ...filter(t => 
+  const overdueTasks = myTasks?.filter(t => 
     t.due_date && new Date(t.due_date) < new Date() && t.status !== "completed"
   ).length || 0
 
