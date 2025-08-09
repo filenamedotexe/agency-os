@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation"
-import { createClient } from "@/lib/supabase/server"
-import { ROUTES, ROLE_REDIRECTS } from "@/lib/constants"
-import { UserRole } from "@/types"
+import { createClient } from "@/shared/lib/supabase/server"
+import { ROUTES, ROLE_REDIRECTS } from "@/shared/lib/constants"
+import { UserRole } from "@/shared/types"
 
 export default async function DashboardRedirect() {
   const supabase = await createClient()

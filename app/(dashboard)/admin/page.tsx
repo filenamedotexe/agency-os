@@ -1,8 +1,7 @@
 import { redirect } from "next/navigation"
-import { createClient } from "@/lib/supabase/server"
-import { StatCard } from "@/components/dashboard/stat-card"
-import { RecentActivity } from "@/components/dashboard/recent-activity"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { createClient } from "@/shared/lib/supabase/server"
+import { StatCard, RecentActivity } from "@/features/dashboard"
+import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card"
 import {
   Users,
   Briefcase,

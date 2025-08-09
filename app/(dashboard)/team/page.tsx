@@ -1,9 +1,9 @@
 import { redirect } from "next/navigation"
-import { createClient } from "@/lib/supabase/server"
-import { StatCard } from "@/components/dashboard/stat-card"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { ScrollArea } from "@/components/ui/scroll-area"
+import { createClient } from "@/shared/lib/supabase/server"
+import { StatCard } from "@/features/dashboard"
+import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card"
+import { Badge } from "@/shared/components/ui/badge"
+import { ScrollArea } from "@/shared/components/ui/scroll-area"
 import {
   CheckCircle,
   Clock,

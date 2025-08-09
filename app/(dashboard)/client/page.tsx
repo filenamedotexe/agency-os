@@ -1,13 +1,13 @@
 import { redirect } from "next/navigation"
-import { createClient } from "@/lib/supabase/server"
-import { ROUTES } from "@/lib/constants"
-import { formatTimeAgo, calculateProgress, formatCurrency } from "@/lib/helpers"
-import { StatCard } from "@/components/dashboard/stat-card"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import type { Service, Milestone, Task } from "@/types"
+import { createClient } from "@/shared/lib/supabase/server"
+import { ROUTES } from "@/shared/lib/constants"
+import { formatTimeAgo, calculateProgress, formatCurrency } from "@/shared/lib/helpers"
+import { StatCard } from "@/features/dashboard"
+import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card"
+import { Badge } from "@/shared/components/ui/badge"
+import { Progress } from "@/shared/components/ui/progress"
+import { ScrollArea } from "@/shared/components/ui/scroll-area"
+import type { ServiceWithMilestones, MilestoneWithTasks, Task } from "@/shared/types"
 import {
   Briefcase,
   Clock,
@@ -66,15 +66,15 @@ export default async function ClientDashboard() {
     0
   ) || 0
 
-  // Get overall progress across all services
-  const calculateServiceProgress = (service: Service) => {
+  // Get overall progress across all services  
+  const calculateServiceProgress = (service: ServiceWithMilestones) => {
     const totalTasks = service.milestones?.reduce(
-      (sum: number, m: Milestone) => sum + (m.tasks?.length || 0),
+      (sum: number, m: MilestoneWithTasks) => sum + (m.tasks?.length || 0),
       0
     ) || 0
     
     const completedTasks = service.milestones?.reduce(
-      (sum: number, m: Milestone) => sum + (m.tasks?.filter((t: Task) => t.status === "completed").length || 0),
+      (sum: number, m: MilestoneWithTasks) => sum + (m.tasks?.filter((t: Task) => t.status === "completed").length || 0),
       0
     ) || 0
     
@@ -196,7 +196,7 @@ export default async function ClientDashboard() {
                       const progress = calculateServiceProgress(service)
                       const totalMilestones = service.milestones?.length || 0
                       const completedMilestones = service.milestones?.filter(
-                        (m: Milestone) => m.status === "completed"
+                        (m: MilestoneWithTasks) => m.status === "completed"
                       ).length || 0
                       
                       return (

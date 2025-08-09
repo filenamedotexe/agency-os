@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation"
-import { createClient } from "@/lib/supabase/server"
-import { ResponsiveNav } from "@/components/layout/responsive-nav"
+import { createClient } from "@/shared/lib/supabase/server"
+import { ResponsiveNav } from "@/shared/components/layout/responsive-nav"
 
 export default async function DashboardLayout({
   children,

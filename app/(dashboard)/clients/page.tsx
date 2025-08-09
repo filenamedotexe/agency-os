@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation"
-import { createClient } from "@/lib/supabase/server"
-import { ClientsWrapper } from "@/components/clients/clients-wrapper"
+import { createClient } from "@/shared/lib/supabase/server"
+import { ClientsWrapper } from "@/features/clients"
 
 export default async function ClientsPage() {
   const supabase = await createClient()

@@ -1,0 +1,12 @@
+// Shared Utilities Exports
+export * from './components/layout/responsive-nav'
+export * from './components/error-boundary'
+export * from './hooks/use-auth'
+export * from './hooks/use-supabase' 
+export * from './hooks/use-toast'
+export { createClient as createBrowserClient } from './lib/supabase/client'
+export { createClient as createServerClient } from './lib/supabase/server'
+export * from './lib/helpers'
+export * from './lib/validations'
+export * from './lib/error-handling'
+export * from './types'
