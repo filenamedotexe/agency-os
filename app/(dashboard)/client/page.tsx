@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
+import { ROUTES } from "@/lib/constants"
+import { formatTimeAgo, calculateProgress, formatCurrency } from "@/lib/helpers"
 import { StatCard } from "@/components/dashboard/stat-card"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -21,7 +23,7 @@ export default async function ClientDashboard() {
   
   // Verify client access
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect("/login")
+  if (!user) redirect(ROUTES.LOGIN)
   
   const { data: profile } = await supabase
     .from("profiles")
@@ -30,7 +32,7 @@ export default async function ClientDashboard() {
     .single()
     
   if (profile?.role !== "client") {
-    redirect("/dashboard")
+    redirect(ROUTES.DASHBOARD)
   }
 
   // Fetch client's services with milestones and tasks
@@ -339,16 +341,4 @@ export default async function ClientDashboard() {
       </div>
     </div>
   )
-}
-
-// Helper function to format time ago
-function formatTimeAgo(date: Date): string {
-  const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000)
-  
-  if (seconds < 60) return "just now"
-  if (seconds < 3600) return `${Math.floor(seconds / 60)} minutes ago`
-  if (seconds < 86400) return `${Math.floor(seconds / 3600)} hours ago`
-  if (seconds < 604800) return `${Math.floor(seconds / 86400)} days ago`
-  
-  return date.toLocaleDateString()
 }

@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
+import { ROUTES, ROLE_REDIRECTS } from "@/lib/constants"
+import { UserRole } from "@/types"
 
 export default async function DashboardRedirect() {
   const supabase = await createClient()
@@ -7,7 +9,7 @@ export default async function DashboardRedirect() {
   const { data: { user } } = await supabase.auth.getUser()
   
   if (!user) {
-    redirect("/login")
+    redirect(ROUTES.LOGIN)
   }
 
   // Get user profile to determine role
@@ -18,14 +20,11 @@ export default async function DashboardRedirect() {
     .single()
 
   // Redirect based on role
-  if (profile?.role === "admin") {
-    redirect("/admin")
-  } else if (profile?.role === "team_member") {
-    redirect("/team")
-  } else if (profile?.role === "client") {
-    redirect("/client")
+  const role = profile?.role as UserRole
+  if (role && ROLE_REDIRECTS[role]) {
+    redirect(ROLE_REDIRECTS[role])
   } else {
     // Default fallback
-    redirect("/")
+    redirect(ROUTES.HOME)
   }
 }

@@ -7,6 +7,8 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
 import { createClient } from "@/lib/supabase/client"
+import { ROUTES, ERROR_MESSAGES } from "@/lib/constants"
+import { UserRole } from "@/types"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -104,10 +106,10 @@ export function AuthForm({ mode }: AuthFormProps) {
       }
 
       // Redirect to dashboard (which will handle role-based redirect)
-      router.push("/dashboard")
+      router.push(ROUTES.DASHBOARD)
       router.refresh()
     } catch (err) {
-      setError("An unexpected error occurred")
+      setError(ERROR_MESSAGES.GENERIC)
     } finally {
       setIsLoading(false)
     }
@@ -165,7 +167,7 @@ export function AuthForm({ mode }: AuthFormProps) {
       // Redirect to login
       router.push("/login?registered=true")
     } catch (err) {
-      setError("An unexpected error occurred")
+      setError(ERROR_MESSAGES.GENERIC)
     } finally {
       setIsLoading(false)
     }
