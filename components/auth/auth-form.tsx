@@ -103,21 +103,9 @@ export function AuthForm({ mode }: AuthFormProps) {
         return
       }
 
-      // Get user profile to determine role
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", data.user?.id)
-        .single()
-
-      // Redirect based on role
-      if (profile?.role === "admin") {
-        router.push("/dashboard/admin")
-      } else if (profile?.role === "team_member") {
-        router.push("/dashboard/team")
-      } else {
-        router.push("/dashboard/client")
-      }
+      // Redirect to dashboard (which will handle role-based redirect)
+      router.push("/dashboard")
+      router.refresh()
     } catch (err) {
       setError("An unexpected error occurred")
     } finally {
