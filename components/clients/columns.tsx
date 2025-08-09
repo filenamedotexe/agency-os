@@ -4,15 +4,8 @@ import { ColumnDef } from "@tanstack/react-table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { ArrowUpDown, MoreHorizontal, Mail, Phone, Globe, Building2 } from "lucide-react"
+import { ArrowUpDown, Phone, Globe, Building2 } from "lucide-react"
+import { ClientActions } from "./client-actions"
 
 export type Client = {
   id: string
@@ -28,8 +21,16 @@ export type Client = {
     phone: string | null
     industry: string | null
     website: string | null
+    duda_site_id: string | null
+    duda_site_url: string | null
+    linkedin_url?: string | null
+    twitter_url?: string | null
+    facebook_url?: string | null
+    instagram_url?: string | null
     company_size: string | null
     annual_revenue: string | null
+    address?: string | null
+    notes?: string | null
     tags: string[] | null
   } | null
 }
@@ -122,6 +123,42 @@ export const columns: ColumnDef<Client>[] = [
             <p className="text-xs text-muted-foreground">{industry}</p>
           )}
         </div>
+      )
+    },
+  },
+  {
+    accessorKey: "duda_site_id",
+    header: "Duda Site ID",
+    cell: ({ row }) => {
+      const siteId = row.original.client_profiles?.duda_site_id
+      
+      if (!siteId) return <span className="text-muted-foreground">—</span>
+      
+      return (
+        <div className="font-mono text-sm">
+          {siteId}
+        </div>
+      )
+    },
+  },
+  {
+    accessorKey: "duda_site_url",
+    header: "Duda Site URL",
+    cell: ({ row }) => {
+      const siteUrl = row.original.client_profiles?.duda_site_url
+      
+      if (!siteUrl) return <span className="text-muted-foreground">—</span>
+      
+      return (
+        <a 
+          href={siteUrl} 
+          target="_blank" 
+          rel="noopener noreferrer" 
+          className="text-blue-600 hover:underline text-sm flex items-center gap-1"
+        >
+          <Globe className="h-3 w-3" />
+          View Site
+        </a>
       )
     },
   },
@@ -229,32 +266,20 @@ export const columns: ColumnDef<Client>[] = [
   },
   {
     id: "actions",
+    header: "Actions",
     enableHiding: false,
-    cell: ({ row }) => {
+    enableSorting: false,
+    cell: ({ row, table }) => {
       const client = row.original
+      const meta = table.options.meta as { onDataChange?: () => void } | undefined
 
       return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem>View profile</DropdownMenuItem>
-            <DropdownMenuItem>Edit client</DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <Mail className="mr-2 h-4 w-4" />
-              Send email
-            </DropdownMenuItem>
-            <DropdownMenuItem className="text-red-600">
-              Delete client
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className="flex justify-end">
+          <ClientActions 
+            client={client} 
+            onDataChange={meta?.onDataChange}
+          />
+        </div>
       )
     },
   },

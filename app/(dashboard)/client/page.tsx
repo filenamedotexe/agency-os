@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import type { Service, Milestone, Task } from "@/types"
 import {
   Briefcase,
   Clock,
@@ -36,7 +37,7 @@ export default async function ClientDashboard() {
   }
 
   // Fetch client's services with milestones and tasks
-  const { data: myServices } = await supabase
+  const { data: services } = await supabase
     .from("services")
     .select(`
       *,
@@ -47,6 +48,12 @@ export default async function ClientDashboard() {
     `)
     .eq("client_id", user.id)
     .order("created_at", { ascending: false })
+
+  // Map to correct Service type structure
+  const myServices = services?.map(service => ({
+    ...service,
+    name: service.project_name, // Map project_name to name for consistency
+  }))
 
   // Calculate metrics
   const totalServices = myServices?.length || 0
@@ -60,14 +67,14 @@ export default async function ClientDashboard() {
   ) || 0
 
   // Get overall progress across all services
-  const calculateServiceProgress = (service: any) => {
+  const calculateServiceProgress = (service: Service) => {
     const totalTasks = service.milestones?.reduce(
-      (sum: number, m: any) => sum + (m.tasks?.length || 0),
+      (sum: number, m: Milestone) => sum + (m.tasks?.length || 0),
       0
     ) || 0
     
     const completedTasks = service.milestones?.reduce(
-      (sum: number, m: any) => sum + (m.tasks?.filter((t: any) => t.status === "completed").length || 0),
+      (sum: number, m: Milestone) => sum + (m.tasks?.filter((t: Task) => t.status === "completed").length || 0),
       0
     ) || 0
     
@@ -189,7 +196,7 @@ export default async function ClientDashboard() {
                       const progress = calculateServiceProgress(service)
                       const totalMilestones = service.milestones?.length || 0
                       const completedMilestones = service.milestones?.filter(
-                        (m: any) => m.status === "completed"
+                        (m: Milestone) => m.status === "completed"
                       ).length || 0
                       
                       return (

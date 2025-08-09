@@ -13,7 +13,27 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
+  ColumnOrderState,
 } from "@tanstack/react-table"
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core"
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  horizontalListSortingStrategy,
+} from "@dnd-kit/sortable"
+import {
+  useSortable,
+} from "@dnd-kit/sortable"
+import { CSS } from "@dnd-kit/utilities"
 import {
   Table,
   TableBody,
@@ -30,13 +50,19 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { ChevronDown, Search, Filter, Plus, X } from "lucide-react"
+import { ChevronDown, Search, Filter, Plus, X, GripVertical } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
 import { FilterSheet } from "./filter-sheet"
 import { DataTableFacetedFilter } from "@/components/ui/data-table-faceted-filter"
 import { AddClientDialog } from "./add-client-dialog"
+// Define draggable header props locally
+interface DraggableHeaderProps<TData> {
+  column: any
+  table: any
+}
+import type { Client } from "./columns"
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -44,7 +70,42 @@ interface DataTableProps<TData, TValue> {
   onDataChange?: () => void
 }
 
-export function ClientsDataTable<TData, TValue>({
+// Draggable table header component
+function DraggableTableHeader<TData>({ column, table }: DraggableHeaderProps<TData>) {
+  // Actions column should not be draggable
+  const isDraggable = column.id !== 'actions' && column.id !== 'select'
+  
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: column.id,
+    disabled: !isDraggable,
+  })
+
+  const style = isDraggable ? {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    cursor: isDragging ? 'grabbing' : 'grab',
+  } : {}
+
+  return (
+    <TableHead ref={setNodeRef} style={style} className="relative">
+      <div className="flex items-center gap-2">
+        {isDraggable && (
+          <button
+            {...attributes}
+            {...listeners}
+            className="cursor-grab hover:text-primary touch-none"
+          >
+            <GripVertical className="h-4 w-4" />
+          </button>
+        )}
+        {flexRender(column.column.columnDef.header, column.getContext())}
+      </div>
+    </TableHead>
+  )
+}
+
+export function DraggableDataTable<TData, TValue>({
   columns,
   data,
   onDataChange,
@@ -54,6 +115,13 @@ export function ClientsDataTable<TData, TValue>({
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = React.useState({})
   const [globalFilter, setGlobalFilter] = React.useState("")
+  const [columnOrder, setColumnOrder] = React.useState<ColumnOrderState>(() => {
+    // Get default order from columns, ensuring actions is always last
+    const defaultOrder = columns
+      .filter(col => col.id !== 'actions')
+      .map((column) => typeof column.id === 'string' ? column.id : column.toString())
+    return [...defaultOrder, 'actions']
+  })
   const [selectedFilters, setSelectedFilters] = React.useState<{
     industries: string[]
     sizes: string[]
@@ -63,6 +131,26 @@ export function ClientsDataTable<TData, TValue>({
     sizes: [],
     statuses: [],
   })
+
+  // Load saved column order from localStorage
+  React.useEffect(() => {
+    const savedOrder = localStorage.getItem('clientsTableColumnOrder')
+    if (savedOrder) {
+      try {
+        const parsed = JSON.parse(savedOrder)
+        // Ensure actions column is always last
+        const withoutActions = parsed.filter((id: string) => id !== 'actions')
+        setColumnOrder([...withoutActions, 'actions'])
+      } catch (e) {
+        // Failed to parse saved column order, using default
+      }
+    }
+  }, [])
+
+  // Save column order to localStorage when it changes
+  React.useEffect(() => {
+    localStorage.setItem('clientsTableColumnOrder', JSON.stringify(columnOrder))
+  }, [columnOrder])
 
   const table = useReactTable({
     data,
@@ -75,16 +163,48 @@ export function ClientsDataTable<TData, TValue>({
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
+    onColumnOrderChange: setColumnOrder,
     state: {
       sorting,
       columnFilters,
       columnVisibility,
       rowSelection,
+      columnOrder,
     },
     meta: {
       onDataChange,
     },
   })
+
+  // Drag and drop sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  )
+
+  // Handle drag end
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event
+
+    if (active.id !== over?.id && active.id !== 'actions' && over?.id !== 'actions') {
+      setColumnOrder((items) => {
+        const oldIndex = items.indexOf(active.id as string)
+        const newIndex = items.indexOf(over?.id as string)
+        
+        // Don't allow moving past the actions column
+        if (newIndex >= items.indexOf('actions')) {
+          return items
+        }
+        
+        const newOrder = arrayMove(items, oldIndex, newIndex)
+        // Ensure actions stays at the end
+        const withoutActions = newOrder.filter(id => id !== 'actions')
+        return [...withoutActions, 'actions']
+      })
+    }
+  }
 
   // Debounced search handler
   const debouncedSearch = React.useMemo(
@@ -203,61 +323,86 @@ export function ClientsDataTable<TData, TValue>({
                 })}
             </DropdownMenuContent>
           </DropdownMenu>
+          
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              const defaultOrder = columns
+                .filter(col => col.id !== 'actions')
+                .map((column) => 
+                  typeof column.id === 'string' ? column.id : column.toString()
+                )
+              setColumnOrder([...defaultOrder, 'actions'])
+              localStorage.removeItem('clientsTableColumnOrder')
+            }}
+          >
+            Reset Order
+          </Button>
+          
           <AddClientDialog onClientAdded={onDataChange} />
         </div>
       </div>
 
-      {/* Desktop Table View - Hidden on mobile */}
+      {/* Desktop Table View with Draggable Headers */}
       <div className="hidden md:block rounded-md border">
         <ScrollArea className="w-full">
-          <Table>
-            <TableHeader>
-              {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => {
-                    return (
-                      <TableHead key={header.id}>
-                        {header.isPlaceholder
-                          ? null
-                          : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext()
-                            )}
-                      </TableHead>
-                    )
-                  })}
-                </TableRow>
-              ))}
-            </TableHeader>
-            <TableBody>
-              {table.getRowModel().rows?.length ? (
-                table.getRowModel().rows.map((row) => (
-                  <TableRow
-                    key={row.id}
-                    data-state={row.getIsSelected() && "selected"}
-                  >
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
-                      </TableCell>
-                    ))}
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <Table>
+              <TableHeader>
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <TableRow key={headerGroup.id}>
+                    <SortableContext
+                      items={columnOrder.filter(id => id !== 'actions' && id !== 'select')}
+                      strategy={horizontalListSortingStrategy}
+                    >
+                      {headerGroup.headers.map((header) => {
+                        return (
+                          <DraggableTableHeader
+                            key={header.id}
+                            column={header}
+                            table={table}
+                          />
+                        )
+                      })}
+                    </SortableContext>
                   </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell
-                    colSpan={columns.length}
-                    className="h-24 text-center"
-                  >
-                    No clients found.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+                ))}
+              </TableHeader>
+              <TableBody>
+                {table.getRowModel().rows?.length ? (
+                  table.getRowModel().rows.map((row) => (
+                    <TableRow
+                      key={row.id}
+                      data-state={row.getIsSelected() && "selected"}
+                    >
+                      {row.getVisibleCells().map((cell) => (
+                        <TableCell key={cell.id}>
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext()
+                          )}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell
+                      colSpan={columns.length}
+                      className="h-24 text-center"
+                    >
+                      No clients found.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </DndContext>
           <ScrollBar orientation="horizontal" />
         </ScrollArea>
       </div>
@@ -266,7 +411,7 @@ export function ClientsDataTable<TData, TValue>({
       <div className="md:hidden space-y-4">
         {table.getRowModel().rows?.length ? (
           table.getRowModel().rows.map((row) => {
-            const client = row.original as any
+            const client = row.original as Client
             return (
               <Card key={row.id} className="overflow-hidden">
                 <CardContent className="p-4">

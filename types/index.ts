@@ -17,7 +17,13 @@ export interface ClientProfile {
   profile_id: string
   company_name: string | null
   phone: string | null
-  address: any | null
+  address: {
+    street?: string
+    city?: string
+    state?: string
+    zip?: string
+    country?: string
+  } | null
   industry: string | null
   website: string | null
   company_size: string | null

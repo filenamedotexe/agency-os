@@ -2,25 +2,23 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { createClient } from "@/lib/supabase/client"
+import { useToast } from "@/hooks/use-toast"
+import type { Profile, UserRole } from "@/types"
 import {
-  Home,
   Users,
   Briefcase,
   Settings,
   Menu,
-  X,
   LayoutDashboard,
   UserCircle,
-  ChevronLeft,
   LogOut
 } from "lucide-react"
-
-type UserRole = "admin" | "team_member" | "client"
 
 interface NavItem {
   title: string
@@ -64,13 +62,36 @@ const navigation: NavItem[] = [
 
 interface ResponsiveNavProps {
   userRole: UserRole
-  user?: any
+  user?: Profile
 }
 
 export function ResponsiveNav({ userRole, user }: ResponsiveNavProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
   const pathname = usePathname()
+  const router = useRouter()
+  const { toast } = useToast()
+  const supabase = createClient()
+
+  const handleSignOut = async () => {
+    setIsLoading(true)
+    try {
+      const { error } = await supabase.auth.signOut()
+      if (error) throw error
+      
+      router.push("/login")
+      router.refresh()
+    } catch (error) {
+      toast({
+        title: "Error signing out",
+        description: "Please try again",
+        variant: "destructive"
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   useEffect(() => {
     const checkScreenSize = () => {
@@ -135,9 +156,15 @@ export function ResponsiveNav({ userRole, user }: ResponsiveNavProps) {
                   </nav>
                 </ScrollArea>
                 <div className="border-t p-4">
-                  <Button variant="ghost" className="w-full justify-start" size="sm">
+                  <Button 
+                    variant="ghost" 
+                    className="w-full justify-start" 
+                    size="sm"
+                    onClick={handleSignOut}
+                    disabled={isLoading}
+                  >
                     <LogOut className="mr-2 h-4 w-4" />
-                    Sign out
+                    {isLoading ? "Signing out..." : "Sign out"}
                   </Button>
                 </div>
               </div>
@@ -196,9 +223,15 @@ export function ResponsiveNav({ userRole, user }: ResponsiveNavProps) {
             <p className="text-xs text-muted-foreground capitalize">{userRole.replace('_', ' ')}</p>
           </div>
         </div>
-        <Button variant="ghost" className="w-full justify-start" size="sm">
+        <Button 
+          variant="ghost" 
+          className="w-full justify-start" 
+          size="sm"
+          onClick={handleSignOut}
+          disabled={isLoading}
+        >
           <LogOut className="h-4 w-4 lg:mr-2" />
-          <span className="hidden lg:inline-block">Sign out</span>
+          <span className="hidden lg:inline-block">{isLoading ? "Signing out..." : "Sign out"}</span>
         </Button>
       </div>
     </aside>

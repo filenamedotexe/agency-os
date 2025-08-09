@@ -151,7 +151,7 @@ export function AuthForm({ mode }: AuthFormProps) {
           })
 
         if (profileError) {
-          console.error("Profile creation error:", profileError)
+          // Profile creation error is logged but not blocking
         }
 
         // If client role, create extended profile

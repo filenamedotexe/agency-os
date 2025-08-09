@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
-import { ClientsDataTable } from "@/components/clients/data-table"
-import { columns } from "@/components/clients/columns"
+import { ClientsWrapper } from "@/components/clients/clients-wrapper"
 
 export default async function ClientsPage() {
   const supabase = await createClient()
@@ -31,6 +30,8 @@ export default async function ClientsPage() {
         phone,
         industry,
         website,
+        duda_site_id,
+        duda_site_url,
         company_size,
         annual_revenue,
         tags
@@ -52,7 +53,7 @@ export default async function ClientsPage() {
         </div>
       </div>
       
-      <ClientsDataTable columns={columns} data={clients || []} />
+      <ClientsWrapper initialData={clients || []} />
     </div>
   )
 }

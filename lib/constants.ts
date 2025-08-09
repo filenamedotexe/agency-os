@@ -36,7 +36,7 @@ export const TEST_ACCOUNTS = {
     role: "team_member" as UserRole,
   },
   CLIENT: {
-    email: "client1@acme.com",
+    email: "client@agencyos.dev",
     password: "password123",
     role: "client" as UserRole,
   },
