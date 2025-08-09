@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation"
 import { createClient } from "@/shared/lib/supabase/server"
-import { ResponsiveNav } from "@/shared/components/layout/responsive-nav"
+import { AppSidebar } from "@/shared/components/layout/app-sidebar"
+import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/shared/components/ui/sidebar"
+import { Separator } from "@/shared/components/ui/separator"
 
 export default async function DashboardLayout({
   children,
@@ -30,19 +32,19 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <ResponsiveNav userRole={profile.role} user={profile} />
-      
-      {/* Main content area with responsive padding */}
-      <main className="transition-all duration-200 ease-in-out">
-        {/* Mobile: Account for bottom navigation (64px) and top header (56px) */}
-        {/* Tablet/Desktop: Account for sidebar */}
-        <div className="pb-16 pt-14 md:pb-0 md:pt-0 md:ml-16 lg:ml-64">
-          <div className="min-h-[calc(100vh-120px)] md:min-h-screen">
-            {children}
+    <SidebarProvider>
+      <AppSidebar userRole={profile.role} user={profile} />
+      <SidebarInset>
+        <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
+          <div className="flex items-center gap-2 px-4">
+            <SidebarTrigger className="-ml-1" />
+            <Separator orientation="vertical" className="mr-2 h-4" />
           </div>
+        </header>
+        <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+          {children}
         </div>
-      </main>
-    </div>
+      </SidebarInset>
+    </SidebarProvider>
   )
 }
