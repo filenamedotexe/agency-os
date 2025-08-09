@@ -23,9 +23,9 @@
 ### When encountering an error:
 
 1. **STOP** - Don't create workarounds
-2. **READ** - Read the full error message
-3. **IDENTIFY** - Identify the root cause
-4. **FIX** - Fix the actual issue
+2. **READ** - Read the full error message and stack trace
+3. **IDENTIFY** - Identify the root cause (not symptoms)
+4. **FIX** - Fix the actual issue at its source
 5. **CLEAN** - Clear cache and rebuild if needed:
    ```bash
    rm -rf .next
@@ -33,7 +33,23 @@
    npm run build
    npm run dev
    ```
-6. **TEST** - Verify the fix works
+6. **TEST** - Verify the fix works on all viewports
+7. **DOCUMENT** - Update this file if it's a new pattern
+
+### Common Error Patterns & Fixes
+
+#### "Column with id 'X' does not exist"
+- **Cause**: TanStack Table can't find accessor
+- **Fix**: Check column definition has correct `accessorKey` or `id`
+- **Example**: Changed from `accessorKey: "email"` to `id: "name"` with custom filter
+
+#### "Hydration mismatch"
+- **Cause**: Server/client render differently
+- **Fix**: Use `dynamic(() => import(...), { ssr: false })` or check date/time rendering
+
+#### "Module not found"
+- **Cause**: Missing dependency or wrong import path
+- **Fix**: Check package.json, run `npm install`, verify import paths start with `@/`
 
 ## Common Issues & Solutions
 
@@ -78,10 +94,11 @@ SELECT * FROM profiles LIMIT 1;
 1. User hits any protected route
 2. Middleware checks auth status
 3. Redirects to /login if not authenticated
-4. After login, redirects based on role:
-   - Admin → /dashboard/admin
-   - Team → /dashboard/team
-   - Client → /dashboard/client
+4. After login, redirects to /dashboard
+5. /dashboard checks role and redirects:
+   - Admin → /admin
+   - Team → /team
+   - Client → /client
 
 ### Database Schema
 - `profiles` - Base user data (extends auth.users)
@@ -148,6 +165,71 @@ SUPABASE_SERVICE_ROLE_KEY=[from dashboard]
 DATABASE_URL=postgresql://postgres:agency-final@db.lfqnpszawjpcydobpxul.supabase.co:5432/postgres
 ```
 
+## Refactoring Methodology
+
+### When to Refactor (Do this regularly!):
+1. **After completing each phase** - Clean up before moving on
+2. **When you see duplicate code** - Extract to utilities immediately
+3. **Before committing** - Quick review for improvements
+4. **When errors reveal bad patterns** - Fix the pattern, not just the error
+
+### Refactoring Checklist:
+```
+1. Extract Types
+   - [ ] Move interfaces/types to types/index.ts
+   - [ ] Use consistent naming (Profile, not ProfileType)
+   - [ ] Export and reuse across components
+
+2. Consolidate Constants
+   - [ ] Routes → lib/constants.ts ROUTES object
+   - [ ] Error messages → ERROR_MESSAGES
+   - [ ] Status mappings → STATUS_COLORS
+   - [ ] Remove ALL magic strings/numbers
+
+3. Create Helper Functions
+   - [ ] Date formatting → lib/helpers.ts
+   - [ ] Common calculations → helpers
+   - [ ] Repeated UI logic → helpers
+   - [ ] Remove duplicate functions
+
+4. Improve Error Handling
+   - [ ] Add error boundaries
+   - [ ] Use consistent error messages
+   - [ ] Add proper try/catch blocks
+   - [ ] Log errors appropriately
+
+5. Add Loading States
+   - [ ] Create loading.tsx for async routes
+   - [ ] Add skeleton components
+   - [ ] Show loading during data fetches
+   - [ ] Improve perceived performance
+```
+
+### Code Organization Standards:
+```
+/types
+  index.ts         # All shared TypeScript types
+
+/lib
+  constants.ts     # Routes, messages, configs
+  helpers.ts       # Utility functions
+  /supabase       # Database utilities
+    client.ts
+    server.ts
+
+/components
+  /ui             # Reusable UI components
+  /layout         # Layout components
+  /dashboard      # Dashboard-specific
+  /clients        # Feature-specific
+
+/app
+  /(auth)         # Auth routes group
+  /(dashboard)    # Protected routes group
+  error.tsx       # Global error boundary
+  loading.tsx     # Global loading state
+```
+
 ## IMPORTANT REMINDERS
 
 1. **NO MOCK DATA** - Always use real database
@@ -155,15 +237,29 @@ DATABASE_URL=postgresql://postgres:agency-final@db.lfqnpszawjpcydobpxul.supabase
 3. **TEST EVERYTHING** - Every change needs testing
 4. **STAY RESPONSIVE** - Check all viewports
 5. **CLEAN BUILDS** - When in doubt, clear cache and rebuild
+6. **REFACTOR REGULARLY** - Don't let technical debt accumulate
+7. **DOCUMENT PATTERNS** - Update this file with new solutions
 
 ## Current Status
 
-- ✅ Next.js 15 with TypeScript setup
-- ✅ Supabase connection configured
-- ✅ Database schema created
-- ✅ Test users seeded
-- ✅ Authentication pages created
-- ✅ Responsive navigation built
-- 🔄 Dashboard pages in progress
-- 🔄 Client management in progress
-- 🔄 Services/Tasks UI in progress
+### ✅ Completed
+- Next.js 15 with TypeScript setup
+- Supabase connection configured
+- Database schema with RLS policies
+- Test users seeded (password123)
+- Authentication flow complete
+- Responsive navigation (mobile/desktop)
+- Role-specific dashboards
+- Clients data table with search
+- Error boundaries and loading states
+- Refactored code organization
+
+### 🔄 In Progress
+- Enhanced filtering for clients
+- Client actions (add/edit/delete)
+
+### ⏳ Next Up
+- Client profile pages
+- Services management
+- Task tracking system
+- Settings panel
