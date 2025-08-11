@@ -3,6 +3,7 @@ import { createClient } from "@/shared/lib/supabase/server"
 import { AppSidebar } from "@/shared/components/layout/app-sidebar"
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/shared/components/ui/sidebar"
 import { Separator } from "@/shared/components/ui/separator"
+import { FloatingChat } from "@/features/chat/components/floating-chat"
 
 export default async function DashboardLayout({
   children,
@@ -45,6 +46,14 @@ export default async function DashboardLayout({
           {children}
         </div>
       </SidebarInset>
+      
+      {/* Floating Chat for Client Users */}
+      {user && (
+        <FloatingChat 
+          userId={user.id} 
+          userRole={profile?.role || 'client'}
+        />
+      )}
     </SidebarProvider>
   )
 }

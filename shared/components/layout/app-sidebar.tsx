@@ -26,6 +26,7 @@ import {
   Settings,
   LayoutDashboard,
   UserCircle,
+  MessageCircle,
   LogOut
 } from "lucide-react"
 
@@ -47,6 +48,12 @@ const navigation: NavItem[] = [
     title: "Clients",
     url: "/clients",
     icon: Users,
+    roles: ["admin", "team_member"]
+  },
+  {
+    title: "Messages",
+    url: "/messages",
+    icon: MessageCircle,
     roles: ["admin", "team_member"]
   },
   {

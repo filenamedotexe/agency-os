@@ -248,3 +248,51 @@ async function addTeamParticipants(conversationId: string, clientId: string) {
     }
   }
 }
+
+// Get user conversations (for admin/team inbox)
+export async function getUserConversations() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  
+  if (!user) return { conversations: [] }
+  
+  // First, get conversation IDs where user is a participant
+  const { data: participantData } = await supabase
+    .from("conversation_participants")
+    .select("conversation_id")
+    .eq("user_id", user.id)
+  
+  if (!participantData || participantData.length === 0) {
+    return { conversations: [] }
+  }
+  
+  const conversationIds = participantData.map(p => p.conversation_id)
+  
+  // Then get full conversations data
+  const { data: conversations } = await supabase
+    .from("conversations")
+    .select(`
+      *,
+      client:profiles!conversations_client_id_fkey(
+        id,
+        email,
+        first_name,
+        last_name,
+        client_profiles(company_name)
+      ),
+      messages(
+        id,
+        content,
+        created_at,
+        sender:profiles(first_name, last_name)
+      ),
+      participants:conversation_participants(
+        user_id,
+        last_read_at
+      )
+    `)
+    .in("id", conversationIds)
+    .order("last_message_at", { ascending: false })
+  
+  return { conversations: conversations || [] }
+}
