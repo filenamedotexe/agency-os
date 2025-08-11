@@ -8,7 +8,13 @@ import { TaskAssignedEmail } from '@/emails/templates/task-assigned'
 // Add this import at the top
 import { sendSystemMessage } from './chat'
 
-const resend = new Resend(process.env.RESEND_API_KEY!)
+const getResend = () => {
+  const apiKey = process.env.RESEND_API_KEY
+  if (!apiKey) {
+    throw new Error('RESEND_API_KEY environment variable is not set')
+  }
+  return new Resend(apiKey)
+}
 
 // Generic email sender with logging
 async function sendEmail({
@@ -30,6 +36,7 @@ async function sendEmail({
   
   try {
     // Send via Resend
+    const resend = getResend()
     const { data, error } = await resend.emails.send({
       from: process.env.RESEND_FROM_EMAIL!,
       to,
