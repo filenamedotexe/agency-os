@@ -3,10 +3,9 @@
 import { useState } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { cn } from "@/shared/lib/utils"
-import { Button } from "@/shared/components/ui/button"
 import { useToast } from "@/shared/hooks/use-toast"
 import { createClient } from "@/shared/lib/supabase/client"
+import { Avatar, AvatarFallback } from "@/shared/components/ui/avatar"
 import type { UserRole, Profile } from "@/shared/types"
 import {
   Sidebar,
@@ -105,19 +104,29 @@ export function AppSidebar({ userRole, user }: AppSidebarProps) {
     item.roles.includes(userRole)
   )
 
+  // Get user initials for avatar
+  const getUserInitials = (email?: string) => {
+    if (!email) return "U"
+    const parts = email.split("@")[0].split(".")
+    if (parts.length > 1) {
+      return `${parts[0][0]}${parts[1][0]}`.toUpperCase()
+    }
+    return email[0].toUpperCase()
+  }
+
   return (
-    <Sidebar collapsible="icon">
+    <Sidebar collapsible="icon" className="border-r">
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <Link href="/">
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                  <span className="font-bold">AO</span>
+              <Link href="/dashboard">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                  <span className="text-sm font-bold">AO</span>
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-semibold">AgencyOS</span>
-                  <span className="truncate text-xs">Agency Management</span>
+                  <span className="truncate text-xs">Management Platform</span>
                 </div>
               </Link>
             </SidebarMenuButton>
@@ -136,9 +145,13 @@ export function AppSidebar({ userRole, user }: AppSidebarProps) {
                 
                 return (
                   <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild isActive={isActive}>
+                    <SidebarMenuButton 
+                      asChild 
+                      isActive={isActive}
+                      tooltip={item.title}
+                    >
                       <Link href={item.url}>
-                        <Icon />
+                        <Icon className="h-4 w-4" />
                         <span>{item.title}</span>
                       </Link>
                     </SidebarMenuButton>
@@ -153,28 +166,22 @@ export function AppSidebar({ userRole, user }: AppSidebarProps) {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
-              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                <UserCircle className="size-4" />
-              </div>
+            <div className="flex items-center gap-2 px-2">
+              <Avatar className="h-8 w-8">
+                <AvatarFallback>
+                  {getUserInitials(user?.email)}
+                </AvatarFallback>
+              </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold">{user?.email}</span>
+                <span className="truncate font-semibold">{user?.email?.split('@')[0]}</span>
                 <span className="truncate text-xs capitalize">{userRole.replace('_', ' ')}</span>
               </div>
-            </SidebarMenuButton>
+            </div>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild>
-              <Button 
-                variant="ghost" 
-                className="w-full justify-start" 
-                size="sm"
-                onClick={handleSignOut}
-                disabled={isLoading}
-              >
-                <LogOut />
-                <span>{isLoading ? "Signing out..." : "Sign out"}</span>
-              </Button>
+            <SidebarMenuButton onClick={handleSignOut} disabled={isLoading}>
+              <LogOut className="h-4 w-4" />
+              <span>{isLoading ? "Signing out..." : "Sign out"}</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

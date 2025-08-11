@@ -1,6 +1,11 @@
 import { redirect } from "next/navigation"
 import { createClient } from "@/shared/lib/supabase/server"
 import { ClientsWrapper } from "@/features/clients"
+import { 
+  PageLayout, 
+  PageHeader, 
+  PageContent 
+} from "@/shared/components/layout/page-layout"
 
 export default async function ClientsPage() {
   const supabase = await createClient()
@@ -41,19 +46,18 @@ export default async function ClientsPage() {
     .order("created_at", { ascending: false })
 
   return (
-    <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between space-y-2 sm:space-y-0">
-        <div>
-          <h2 className="text-2xl md:text-3xl font-bold tracking-tight">
-            Clients
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            Manage your client relationships and profiles
-          </p>
-        </div>
-      </div>
+    <PageLayout>
+      <PageHeader
+        title="Clients"
+        subtitle="Manage your client relationships"
+        description={`${clients?.length || 0} total clients`}
+      />
       
-      <ClientsWrapper initialData={clients || []} />
-    </div>
+      <PageContent>
+        <ClientsWrapper 
+          initialData={clients || []}
+        />
+      </PageContent>
+    </PageLayout>
   )
 }

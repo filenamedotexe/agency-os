@@ -1,6 +1,7 @@
 import { createClient } from '@/shared/lib/supabase/client'
 import { createClient as createServerClient } from '@/shared/lib/supabase/server'
 import type { Client } from '@/features/clients'
+import { sendClientWelcome } from '@/app/actions/email'
 
 export interface CreateClientData {
   email: string
@@ -107,6 +108,13 @@ export class ClientsService {
         duda_site_id: data.duda_site_id,
         duda_site_url: data.duda_site_url,
       })
+
+    // Send welcome email (don't block on failure)
+    if (!clientError && authData.user) {
+      sendClientWelcome(authData.user.id).catch(error => {
+        console.error('Failed to send welcome email:', error)
+      })
+    }
 
     return { data: authData, error: clientError }
   }

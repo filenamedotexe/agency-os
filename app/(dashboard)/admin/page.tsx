@@ -1,16 +1,28 @@
 import { redirect } from "next/navigation"
+import Link from "next/link"
 import { createClient } from "@/shared/lib/supabase/server"
 import { StatCard, RecentActivity } from "@/features/dashboard"
-import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/shared/components/ui/card"
+import { Button } from "@/shared/components/ui/button"
+import { Progress } from "@/shared/components/ui/progress"
+import { Badge } from "@/shared/components/ui/badge"
+import { 
+  PageLayout, 
+  PageHeader, 
+  PageContent, 
+  StatGrid, 
+  ContentGrid 
+} from "@/shared/components/layout/page-layout"
+import { designSystem as ds } from "@/shared/lib/design-system"
 import {
   Users,
   Briefcase,
   DollarSign,
-  TrendingUp,
-  Activity,
   UserCheck,
-  Clock,
-  CheckCircle,
+  Activity,
+  Plus,
+  UserPlus,
+  FileText,
 } from "lucide-react"
 
 export default async function AdminDashboard() {
@@ -64,7 +76,7 @@ export default async function AdminDashboard() {
     (s) => s.status === "in_progress"
   ).length || 0
 
-  // Calculate total revenue (sum of all service budgets)
+  // Calculate total revenue
   const totalRevenue = servicesResult.data?.reduce(
     (sum, service) => sum + (parseFloat(service.budget) || 0),
     0
@@ -75,187 +87,196 @@ export default async function AdminDashboard() {
     (t) => t.status === "completed"
   ).length || 0
 
-  // Mock recent activity - in production, this would come from an activity log table
+  const completionRate = totalTasks > 0 
+    ? Math.round((completedTasks / totalTasks) * 100) 
+    : 0
+
+  // Mock recent activity
   const recentActivities = [
     {
       id: "1",
       user: { name: "John Smith", email: "john@agencyos.dev" },
       action: "updated",
       target: "Website Redesign project",
-      timestamp: new Date(Date.now() - 1000 * 60 * 30), // 30 min ago
+      timestamp: new Date(Date.now() - 1000 * 60 * 30),
     },
     {
       id: "2",
       user: { name: "Sarah Johnson", email: "sarah@agencyos.dev" },
       action: "completed",
       target: "User Research task",
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
+      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2),
     },
     {
       id: "3",
       user: { name: "Alice Brown", email: "client1@acme.com" },
       action: "commented on",
       target: "Design Mockups",
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 5), // 5 hours ago
+      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 5),
     },
   ]
 
   return (
-    <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-      <div className="flex items-center justify-between space-y-2">
-        <h2 className="text-2xl md:text-3xl font-bold tracking-tight">
-          Admin Dashboard
-        </h2>
-        <div className="text-sm text-muted-foreground">
-          Welcome back, {profile.first_name}
-        </div>
-      </div>
+    <PageLayout>
+      <PageHeader
+        title="Admin Dashboard"
+        subtitle={`Welcome back, ${profile.first_name || 'Admin'}`}
+      />
+      
+      <PageContent>
+        {/* Stats Grid */}
+        <StatGrid>
+          <StatCard
+            title="Total Clients"
+            value={totalClients}
+            description="Active client accounts"
+            icon={Users}
+            trend={{ value: 12, isPositive: true }}
+          />
+          <StatCard
+            title="Active Services"
+            value={activeServices}
+            description={`${totalServices} total services`}
+            icon={Briefcase}
+            trend={{ value: 8, isPositive: true }}
+          />
+          <StatCard
+            title="Total Revenue"
+            value={`$${totalRevenue.toLocaleString()}`}
+            description="Across all services"
+            icon={DollarSign}
+            trend={{ value: 23, isPositive: true }}
+          />
+          <StatCard
+            title="Team Members"
+            value={totalTeamMembers}
+            description="Active team members"
+            icon={UserCheck}
+          />
+        </StatGrid>
 
-      {/* Stats Grid - Responsive */}
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          title="Total Clients"
-          value={totalClients}
-          description="Active client accounts"
-          icon={Users}
-          trend={{ value: 12, isPositive: true }}
-        />
-        <StatCard
-          title="Active Services"
-          value={activeServices}
-          description={`${totalServices} total services`}
-          icon={Briefcase}
-          trend={{ value: 8, isPositive: true }}
-        />
-        <StatCard
-          title="Total Revenue"
-          value={`$${totalRevenue.toLocaleString()}`}
-          description="Across all services"
-          icon={DollarSign}
-          trend={{ value: 23, isPositive: true }}
-        />
-        <StatCard
-          title="Team Members"
-          value={totalTeamMembers}
-          description="Active team members"
-          icon={UserCheck}
-        />
-      </div>
+        {/* Content Grid */}
+        <ContentGrid columns="sidebar">
+          {/* Activity Feed */}
+          <div className="lg:col-span-4">
+            <RecentActivity activities={recentActivities} />
+          </div>
 
-      {/* Main Content Grid - Responsive */}
-      <div className="grid gap-4 grid-cols-1 lg:grid-cols-7">
-        {/* Activity Feed - Takes more space on desktop */}
-        <div className="lg:col-span-4">
-          <RecentActivity activities={recentActivities} />
-        </div>
+          {/* Side Panels */}
+          <div className={`lg:col-span-3 ${ds.spacing.page.gap}`}>
+            {/* Task Overview */}
+            <Card>
+              <CardHeader>
+                <div className={ds.layout.flex.between}>
+                  <div>
+                    <CardTitle>Task Overview</CardTitle>
+                    <CardDescription>Current task progress</CardDescription>
+                  </div>
+                  <Activity className="h-5 w-5 text-muted-foreground" />
+                </div>
+              </CardHeader>
+              <CardContent className={ds.spacing.section.gap}>
+                <div className="space-y-2">
+                  <div className={`${ds.layout.flex.between} text-sm`}>
+                    <span className="text-muted-foreground">Total Tasks</span>
+                    <span className="font-medium">{totalTasks}</span>
+                  </div>
+                  <div className={`${ds.layout.flex.between} text-sm`}>
+                    <span className="text-muted-foreground">Completed</span>
+                    <Badge variant="default">{completedTasks}</Badge>
+                  </div>
+                  <div className={`${ds.layout.flex.between} text-sm`}>
+                    <span className="text-muted-foreground">In Progress</span>
+                    <Badge variant="secondary">{totalTasks - completedTasks}</Badge>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <div className={`${ds.layout.flex.between} text-sm`}>
+                    <span className="text-muted-foreground">Completion Rate</span>
+                    <span className="font-medium">{completionRate}%</span>
+                  </div>
+                  <Progress value={completionRate} className="h-2" />
+                </div>
+              </CardContent>
+            </Card>
 
-        {/* Quick Stats - Sidebar on desktop */}
-        <div className="lg:col-span-3 space-y-4">
-          {/* Task Overview */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Task Overview
-              </CardTitle>
-              <Activity className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Total Tasks</span>
-                  <span className="font-medium">{totalTasks}</span>
+            {/* Service Status */}
+            <Card>
+              <CardHeader>
+                <div className={ds.layout.flex.between}>
+                  <div>
+                    <CardTitle>Service Status</CardTitle>
+                    <CardDescription>Service distribution</CardDescription>
+                  </div>
+                  <Briefcase className="h-5 w-5 text-muted-foreground" />
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Completed</span>
-                  <span className="font-medium text-green-600">{completedTasks}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">In Progress</span>
-                  <span className="font-medium text-blue-600">
-                    {totalTasks - completedTasks}
-                  </span>
-                </div>
-              </div>
-              {/* Progress Bar */}
-              <div className="mt-3">
-                <div className="flex items-center justify-between text-xs">
-                  <span>Completion Rate</span>
-                  <span className="font-medium">
-                    {totalTasks > 0 
-                      ? Math.round((completedTasks / totalTasks) * 100) 
-                      : 0}%
-                  </span>
-                </div>
-                <div className="mt-1 h-2 rounded-full bg-secondary">
-                  <div
-                    className="h-full rounded-full bg-primary transition-all"
-                    style={{
-                      width: `${
-                        totalTasks > 0 
-                          ? (completedTasks / totalTasks) * 100 
-                          : 0
-                      }%`,
-                    }}
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Service Status */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Service Status
-              </CardTitle>
-              <Briefcase className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Planning</span>
-                  <span className="font-medium">
+              </CardHeader>
+              <CardContent className={ds.spacing.component.gap}>
+                <div className={`${ds.layout.flex.between}`}>
+                  <div className={`${ds.layout.flex.start} gap-2`}>
+                    <div className="h-2 w-2 rounded-full bg-yellow-500" />
+                    <span className={ds.typography.component.body}>Planning</span>
+                  </div>
+                  <span className="text-sm font-medium">
                     {servicesResult.data?.filter(s => s.status === "planning").length || 0}
                   </span>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">In Progress</span>
-                  <span className="font-medium text-blue-600">
-                    {activeServices}
-                  </span>
+                <div className={`${ds.layout.flex.between}`}>
+                  <div className={`${ds.layout.flex.start} gap-2`}>
+                    <div className="h-2 w-2 rounded-full bg-blue-500" />
+                    <span className={ds.typography.component.body}>In Progress</span>
+                  </div>
+                  <span className="text-sm font-medium">{activeServices}</span>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Completed</span>
-                  <span className="font-medium text-green-600">
+                <div className={`${ds.layout.flex.between}`}>
+                  <div className={`${ds.layout.flex.start} gap-2`}>
+                    <div className="h-2 w-2 rounded-full bg-green-500" />
+                    <span className={ds.typography.component.body}>Completed</span>
+                  </div>
+                  <span className="text-sm font-medium">
                     {servicesResult.data?.filter(s => s.status === "completed").length || 0}
                   </span>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
 
-          {/* Quick Actions */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm font-medium">Quick Actions</CardTitle>
-            </CardHeader>
-            <CardContent className="grid gap-2">
-              <button className="text-sm text-left hover:text-primary transition-colors">
-                → Add New Client
-              </button>
-              <button className="text-sm text-left hover:text-primary transition-colors">
-                → Create Service
-              </button>
-              <button className="text-sm text-left hover:text-primary transition-colors">
-                → Invite Team Member
-              </button>
-              <button className="text-sm text-left hover:text-primary transition-colors">
-                → View Reports
-              </button>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    </div>
+            {/* Quick Actions */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Quick Actions</CardTitle>
+                <CardDescription>Common administrative tasks</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-1">
+                <Button variant="ghost" className="w-full justify-start h-9" asChild>
+                  <Link href="/clients">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add New Client
+                  </Link>
+                </Button>
+                <Button variant="ghost" className="w-full justify-start h-9" asChild>
+                  <Link href="/services">
+                    <Briefcase className="mr-2 h-4 w-4" />
+                    Create Service
+                  </Link>
+                </Button>
+                <Button variant="ghost" className="w-full justify-start h-9" asChild>
+                  <Link href="/team">
+                    <UserPlus className="mr-2 h-4 w-4" />
+                    Invite Team Member
+                  </Link>
+                </Button>
+                <Button variant="ghost" className="w-full justify-start h-9" asChild>
+                  <Link href="/reports">
+                    <FileText className="mr-2 h-4 w-4" />
+                    View Reports
+                  </Link>
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </ContentGrid>
+      </PageContent>
+    </PageLayout>
   )
 }

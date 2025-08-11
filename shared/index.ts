@@ -1,5 +1,6 @@
 // Shared Utilities Exports
 export * from './components/layout/app-sidebar'
+export * from './components/layout/page-layout'
 export * from './components/error-boundary'
 export * from './hooks/use-auth'
 export * from './hooks/use-supabase' 
