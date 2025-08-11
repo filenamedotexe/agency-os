@@ -9,8 +9,9 @@ import { formatDistanceToNow } from 'date-fns'
 import { Badge } from '@/shared/components/ui/badge'
 import { ScrollArea } from '@/shared/components/ui/scroll-area'
 import { Button } from '@/shared/components/ui/button'
-import { Plus } from 'lucide-react'
+import { Plus, User, Paperclip } from 'lucide-react'
 import { NewMessageModal } from './new-message-modal'
+import { ClientAttachmentsModal } from './client-attachments-modal'
 
 interface MessagesInboxProps {
   userId: string
@@ -21,6 +22,8 @@ export function MessagesInbox({ userId }: MessagesInboxProps) {
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [showNewMessageModal, setShowNewMessageModal] = useState(false)
+  const [showAttachmentsModal, setShowAttachmentsModal] = useState(false)
+  const [selectedClientForAttachments, setSelectedClientForAttachments] = useState<{id: string, name: string} | null>(null)
   
   const loadConversations = async () => {
     const { conversations: data } = await getUserConversations()
@@ -40,11 +43,25 @@ export function MessagesInbox({ userId }: MessagesInboxProps) {
   }, [selectedConversationId])
   
   const selectedConversation = conversations.find(c => c.id === selectedConversationId)
+
+  const handleProfileClick = (clientId: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    window.open(`/clients/${clientId}`, '_blank')
+  }
+
+  const handleAttachmentsClick = (client: any, e: React.MouseEvent) => {
+    e.stopPropagation()
+    const clientName = client?.client_profiles?.company_name || 
+                      `${client?.first_name} ${client?.last_name}` ||
+                      client?.email
+    setSelectedClientForAttachments({ id: client.id, name: clientName })
+    setShowAttachmentsModal(true)
+  }
   
   return (
     <div className="flex h-full">
       {/* Conversation List */}
-      <div className="w-80 border-r flex flex-col">
+      <div className="w-full sm:w-80 lg:w-96 border-r flex flex-col sm:min-w-[320px]">
         <div className="p-4 border-b">
           <div className="flex items-center justify-between">
             <h2 className="font-semibold text-lg">Messages</h2>
@@ -76,18 +93,18 @@ export function MessagesInbox({ userId }: MessagesInboxProps) {
                 const lastMessage = conversation.last_message_preview
                 
                 return (
-                  <button
+                  <div
                     key={conversation.id}
-                    onClick={() => setSelectedConversationId(conversation.id)}
                     className={cn(
-                      "w-full p-3 rounded-lg text-left transition-colors",
+                      "w-full p-3 rounded-lg transition-colors cursor-pointer relative",
                       "hover:bg-accent",
                       selectedConversationId === conversation.id && "bg-accent",
                       hasUnread && "font-medium"
                     )}
+                    onClick={() => setSelectedConversationId(conversation.id)}
                   >
                     <div className="flex items-start gap-3">
-                      <Avatar className="h-10 w-10">
+                      <Avatar className="h-10 w-10 sm:h-12 sm:w-12">
                         <AvatarFallback>
                           {client?.first_name?.[0] || client?.email[0].toUpperCase()}
                         </AvatarFallback>
@@ -95,19 +112,44 @@ export function MessagesInbox({ userId }: MessagesInboxProps) {
                       
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between mb-1">
-                          <span className="text-sm font-medium truncate">
+                          <span className="text-sm sm:text-base font-medium truncate">
                             {client?.client_profiles?.company_name || 
                              `${client?.first_name} ${client?.last_name}` ||
                              client?.email}
                           </span>
-                          {hasUnread && (
-                            <Badge variant="destructive" className="ml-2">
-                              {conversation.unread_count}
-                            </Badge>
-                          )}
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            {hasUnread && (
+                              <Badge variant="destructive" className="text-xs">
+                                {conversation.unread_count}
+                              </Badge>
+                            )}
+                            {conversation.attachment_count > 0 && (
+                              <button
+                                onClick={(e) => handleAttachmentsClick(client, e)}
+                                className="p-2 hover:bg-muted rounded-md text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
+                                title={`${conversation.attachment_count} attachments`}
+                              >
+                                <div className="relative">
+                                  <Paperclip className="h-4 w-4 sm:h-5 sm:w-5" />
+                                  {conversation.attachment_count <= 99 && (
+                                    <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 text-xs bg-blue-500 hover:bg-blue-600 flex items-center justify-center">
+                                      {conversation.attachment_count > 9 ? '9+' : conversation.attachment_count}
+                                    </Badge>
+                                  )}
+                                </div>
+                              </button>
+                            )}
+                            <button
+                              onClick={(e) => handleProfileClick(client.id, e)}
+                              className="p-2 hover:bg-muted rounded-md text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
+                              title="View profile"
+                            >
+                              <User className="h-4 w-4 sm:h-5 sm:w-5" />
+                            </button>
+                          </div>
                         </div>
                         
-                        <p className="text-xs text-muted-foreground truncate">
+                        <p className="text-xs sm:text-sm text-muted-foreground truncate">
                           {lastMessage || 'No messages yet'}
                         </p>
                         
@@ -120,7 +162,7 @@ export function MessagesInbox({ userId }: MessagesInboxProps) {
                         )}
                       </div>
                     </div>
-                  </button>
+                  </div>
                 )
               })}
             </div>
@@ -162,6 +204,15 @@ export function MessagesInbox({ userId }: MessagesInboxProps) {
           loadConversations()
         }}
       />
+
+      {selectedClientForAttachments && (
+        <ClientAttachmentsModal
+          open={showAttachmentsModal}
+          onOpenChange={setShowAttachmentsModal}
+          clientId={selectedClientForAttachments.id}
+          clientName={selectedClientForAttachments.name}
+        />
+      )}
     </div>
   )
 }

@@ -3,47 +3,134 @@
 import { useState, useRef } from 'react'
 import { Button } from '@/shared/components/ui/button'
 import { Textarea } from '@/shared/components/ui/textarea'
-import { Send, Paperclip, X } from 'lucide-react'
+import { Send, Paperclip, X, Loader2 } from 'lucide-react'
 import { useDropzone } from 'react-dropzone'
-import { uploadAttachment } from '@/app/actions/chat'
 import { cn } from '@/shared/lib/utils'
+import { createClient } from '@/shared/lib/supabase/client'
+import { v4 as uuidv4 } from 'uuid'
+import { useToast } from '@/shared/hooks/use-toast'
 
 interface ChatInputProps {
   onSendMessage: (content: string, attachments: any[]) => void
   disabled?: boolean
   placeholder?: string
   conversationId?: string
+  currentUserId: string
 }
 
 export function ChatInput({ 
   onSendMessage, 
   disabled, 
   placeholder,
-  conversationId = 'temp-conversation-id' 
+  conversationId = 'temp-conversation-id',
+  currentUserId
 }: ChatInputProps) {
   const [message, setMessage] = useState('')
   const [attachments, setAttachments] = useState<any[]>([])
   const [uploading, setUploading] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const { toast } = useToast()
+  
+  // Upload file directly from client
+  const uploadFile = async (file: File) => {
+    const supabase = createClient()
+    
+    // Generate unique file path
+    const fileExt = file.name.split('.').pop()
+    const fileName = `${currentUserId}/${conversationId}/${uuidv4()}.${fileExt}`
+    
+    // Upload to Supabase Storage
+    const { data, error } = await supabase.storage
+      .from('chat-attachments')
+      .upload(fileName, file, {
+        cacheControl: '3600',
+        upsert: false
+      })
+    
+    if (error) {
+      console.error('Upload error:', error)
+      toast({
+        title: "Upload failed",
+        description: error.message,
+        variant: "destructive"
+      })
+      return null
+    }
+    
+    // Get signed URL (valid for 1 hour)
+    const { data: signedUrlData, error: urlError } = await supabase.storage
+      .from('chat-attachments')
+      .createSignedUrl(fileName, 3600) // 1 hour expiry
+    
+    if (urlError) {
+      console.error('Signed URL error:', urlError)
+      // Fallback to public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('chat-attachments')
+        .getPublicUrl(fileName)
+      
+      return {
+        name: file.name,
+        url: publicUrl,
+        size: file.size,
+        type: file.type
+      }
+    }
+    
+    return {
+      name: file.name,
+      url: signedUrlData.signedUrl,
+      size: file.size,
+      type: file.type
+    }
+  }
   
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop: async (acceptedFiles) => {
       setUploading(true)
       
-      for (const file of acceptedFiles) {
-        const { attachment, error } = await uploadAttachment(
-          file,
-          conversationId
-        )
+      try {
+        const uploadPromises = acceptedFiles.map(file => uploadFile(file))
+        const results = await Promise.all(uploadPromises)
         
-        if (attachment) {
-          setAttachments(prev => [...prev, attachment])
+        const successful = results.filter(Boolean)
+        if (successful.length > 0) {
+          setAttachments(prev => [...prev, ...successful])
+          
+          toast({
+            title: "Files uploaded",
+            description: `${successful.length} file${successful.length !== 1 ? 's' : ''} uploaded successfully`,
+            variant: "default"
+          })
+          
+          if (successful.length !== acceptedFiles.length) {
+            toast({
+              title: "Some uploads failed",
+              description: `${successful.length} of ${acceptedFiles.length} files uploaded`,
+              variant: "default"
+            })
+          }
         }
+      } catch (error) {
+        console.error('Upload error:', error)
+        toast({
+          title: "Upload failed",
+          description: "Failed to upload files",
+          variant: "destructive"
+        })
+      } finally {
+        setUploading(false)
       }
-      
-      setUploading(false)
     },
     maxSize: 10 * 1024 * 1024, // 10MB
+    accept: {
+      'image/*': ['.png', '.jpg', '.jpeg', '.gif', '.webp'],
+      'application/pdf': ['.pdf'],
+      'application/msword': ['.doc'],
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+      'text/plain': ['.txt'],
+      'text/csv': ['.csv']
+    },
     noClick: true,
     noKeyboard: true
   })
@@ -68,6 +155,38 @@ export function ChatInput({
     setAttachments(prev => prev.filter((_, i) => i !== index))
   }
   
+  // File input handler for button click
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || [])
+    if (files.length === 0) return
+    
+    setUploading(true)
+    
+    try {
+      const uploadPromises = files.map(file => uploadFile(file))
+      const results = await Promise.all(uploadPromises)
+      
+      const successful = results.filter(Boolean)
+      if (successful.length > 0) {
+        setAttachments(prev => [...prev, ...successful])
+      }
+    } catch (error) {
+      console.error('Upload error:', error)
+      toast({
+        title: "Upload failed",
+        description: "Failed to upload files",
+        variant: "destructive"
+      })
+    } finally {
+      setUploading(false)
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+    }
+  }
+  
   return (
     <div className="border-t">
       {attachments.length > 0 && (
@@ -82,6 +201,7 @@ export function ChatInput({
               <button
                 onClick={() => removeAttachment(index)}
                 className="ml-1 hover:text-destructive"
+                disabled={uploading}
               >
                 <X className="h-3 w-3" />
               </button>
@@ -96,14 +216,28 @@ export function ChatInput({
       )}>
         <input {...getInputProps()} />
         
+        <input
+          ref={fileInputRef}
+          type="file"
+          multiple
+          onChange={handleFileSelect}
+          className="hidden"
+          accept="image/*,application/pdf,.doc,.docx,.txt,.csv"
+        />
+        
         <Button
           type="button"
           variant="ghost"
           size="icon"
           className="flex-shrink-0"
           disabled={uploading}
+          onClick={() => fileInputRef.current?.click()}
         >
-          <Paperclip className="h-4 w-4" />
+          {uploading ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Paperclip className="h-4 w-4" />
+          )}
         </Button>
         
         <Textarea

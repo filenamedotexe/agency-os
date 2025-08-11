@@ -133,6 +133,7 @@ export function ChatThread({
         disabled={sending}
         placeholder="Type a message..."
         conversationId={conversationId}
+        currentUserId={currentUserId}
       />
     </div>
   )

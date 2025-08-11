@@ -1,7 +1,6 @@
 "use server"
 
 import { createClient } from '@/shared/lib/supabase/server'
-import { v4 as uuidv4 } from 'uuid'
 
 // Initialize or get conversation for a client
 export async function getOrCreateConversation(clientId: string) {
@@ -168,39 +167,8 @@ export async function sendSystemMessage({
   return { message }
 }
 
-// Upload file attachment
-export async function uploadAttachment(file: File, conversationId: string) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  
-  if (!user) return { error: 'Not authenticated' }
-  
-  const fileExt = file.name.split('.').pop()
-  const fileName = `${user.id}/${conversationId}/${uuidv4()}.${fileExt}`
-  
-  const { error } = await supabase.storage
-    .from('chat-attachments')
-    .upload(fileName, file, {
-      cacheControl: '3600',
-      upsert: false
-    })
-  
-  if (error) return { error }
-  
-  // Get public URL
-  const { data: { publicUrl } } = supabase.storage
-    .from('chat-attachments')
-    .getPublicUrl(fileName)
-  
-  return {
-    attachment: {
-      name: file.name,
-      url: publicUrl,
-      size: file.size,
-      type: file.type
-    }
-  }
-}
+// Note: File uploads are now handled client-side in ChatInput component
+// This server action has been removed to avoid File object serialization issues
 
 // Get conversation messages
 export async function getMessages(conversationId: string, limit = 50) {
@@ -275,6 +243,111 @@ async function addTeamParticipants(conversationId: string, clientId: string) {
   }
 }
 
+// Get all attachments for a specific client
+export async function getClientAttachments(clientId: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  
+  if (!user) return { error: 'Not authenticated' }
+  
+  // Get all conversations with this client
+  const { data: conversations } = await supabase
+    .from('conversations')
+    .select('id')
+    .eq('client_id', clientId)
+  
+  if (!conversations || conversations.length === 0) {
+    return { attachments: [] }
+  }
+  
+  const conversationIds = conversations.map(c => c.id)
+  
+  // Get all messages with attachments from these conversations
+  const { data: messages, error } = await supabase
+    .from('messages')
+    .select(`
+      id,
+      content,
+      attachments,
+      created_at,
+      conversation_id,
+      sender:profiles(
+        id,
+        first_name,
+        last_name,
+        role
+      )
+    `)
+    .in('conversation_id', conversationIds)
+    .not('attachments', 'is', null)
+    .order('created_at', { ascending: false })
+  
+  if (error) return { error }
+  
+  // Flatten attachments with metadata and generate signed URLs
+  const allAttachments = []
+  
+  for (const message of messages || []) {
+    if (message.attachments && Array.isArray(message.attachments)) {
+      for (const attachment of message.attachments) {
+        // Generate signed URL for secure access
+        let secureUrl = attachment.url
+        try {
+          // Extract file path from various URL formats
+          let filePath = null
+          
+          // Handle public URL format
+          if (attachment.url.includes('/storage/v1/object/public/chat-attachments/')) {
+            const urlParts = attachment.url.split('/storage/v1/object/public/chat-attachments/')
+            if (urlParts.length > 1) {
+              filePath = urlParts[1].split('?')[0] // Remove any query params
+            }
+          }
+          // Handle signed URL format (extract path from already signed URL)
+          else if (attachment.url.includes('/storage/v1/object/sign/chat-attachments/')) {
+            const urlParts = attachment.url.split('/storage/v1/object/sign/chat-attachments/')
+            if (urlParts.length > 1) {
+              filePath = urlParts[1].split('?')[0] // Remove token and other params
+            }
+          }
+          // Handle direct file path (if attachment.url is already a path)
+          else if (!attachment.url.startsWith('http')) {
+            filePath = attachment.url
+          }
+          
+          // Generate fresh signed URL if we have a file path
+          if (filePath) {
+            const { data: signedData, error: signedError } = await supabase.storage
+              .from('chat-attachments')
+              .createSignedUrl(filePath, 3600) // 1 hour expiry
+            
+            if (!signedError && signedData?.signedUrl) {
+              secureUrl = signedData.signedUrl
+            } else if (signedError) {
+              console.error('Signed URL generation error:', signedError.message)
+            }
+          }
+        } catch (error) {
+          console.error('Error generating signed URL:', error)
+          // Keep original URL as fallback
+        }
+        
+        allAttachments.push({
+          ...attachment,
+          url: secureUrl, // Use signed URL
+          messageId: message.id,
+          conversationId: message.conversation_id,
+          uploadedAt: message.created_at,
+          uploadedBy: message.sender,
+          messageContent: message.content
+        })
+      }
+    }
+  }
+  
+  return { attachments: allAttachments }
+}
+
 // Get user conversations (for admin/team inbox)
 export async function getUserConversations() {
   const supabase = await createClient()
@@ -294,7 +367,7 @@ export async function getUserConversations() {
   
   const conversationIds = participantData.map(p => p.conversation_id)
   
-  // Then get full conversations data
+  // Then get full conversations data with attachment counts
   const { data: conversations } = await supabase
     .from("conversations")
     .select(`
@@ -310,6 +383,7 @@ export async function getUserConversations() {
         id,
         content,
         created_at,
+        attachments,
         sender:profiles(first_name, last_name)
       ),
       participants:conversation_participants(
@@ -320,5 +394,17 @@ export async function getUserConversations() {
     .in("id", conversationIds)
     .order("last_message_at", { ascending: false })
   
-  return { conversations: conversations || [] }
+  // Add attachment count to each conversation  
+  const conversationsWithCounts = (conversations || []).map(conv => {
+    const attachmentCount = conv.messages?.reduce((total: number, msg: { attachments?: unknown[] }) => {
+      return total + (msg.attachments ? msg.attachments.length : 0)
+    }, 0) || 0
+    
+    return {
+      ...conv,
+      attachment_count: attachmentCount
+    }
+  })
+  
+  return { conversations: conversationsWithCounts }
 }
