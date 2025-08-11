@@ -11,6 +11,39 @@ const nextConfig = {
       },
     ],
   },
+  webpack: (config, { isServer }) => {
+    // Suppress webpack warnings for Supabase dependencies and performance warnings
+    config.ignoreWarnings = [
+      {
+        module: /node_modules\/@supabase\/realtime-js/,
+        message: /Critical dependency|Node\.js API/,
+      },
+      {
+        module: /node_modules\/@supabase\/supabase-js/,
+        message: /Node\.js API/,
+      },
+      {
+        message: /Serializing big strings.*impacts deserialization performance/,
+      },
+    ];
+
+    // Suppress cache warnings in webpack output
+    config.infrastructureLogging = {
+      level: 'error',
+    };
+
+    // Don't resolve these modules on the client
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        net: false,
+        tls: false,
+      };
+    }
+
+    return config;
+  },
 };
 
 export default withSentryConfig(

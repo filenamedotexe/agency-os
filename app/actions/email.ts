@@ -5,6 +5,8 @@ import { createClient } from '@/shared/lib/supabase/server'
 import { WelcomeEmail } from '@/emails/templates/welcome'
 import { MilestoneCompleteEmail } from '@/emails/templates/milestone-complete'
 import { TaskAssignedEmail } from '@/emails/templates/task-assigned'
+// Add this import at the top
+import { sendSystemMessage } from './chat'
 
 const resend = new Resend(process.env.RESEND_API_KEY!)
 
@@ -48,6 +50,26 @@ async function sendEmail({
         resend_id: data?.id
       }
     })
+    
+    // Add to chat thread
+    const { data: conversation } = await supabase
+      .from('conversations')
+      .select('id')
+      .eq('client_id', recipientId)
+      .single()
+    
+    if (conversation) {
+      await sendSystemMessage({
+        conversationId: conversation.id,
+        content: `📧 Email sent: ${subject}`,
+        metadata: {
+          type: 'email_sent',
+          email_type: type,
+          subject,
+          ...metadata
+        }
+      })
+    }
     
     return { success: !error, data, error }
   } catch (err) {

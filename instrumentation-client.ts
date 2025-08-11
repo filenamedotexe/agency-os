@@ -30,3 +30,6 @@ Sentry.init({
   replaysSessionSampleRate: 0.1, // 10% of sessions will be recorded
   replaysOnErrorSampleRate: 1.0, // 100% of sessions with errors will be recorded
 });
+
+// Export router transition start hook as required by Sentry
+export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;
