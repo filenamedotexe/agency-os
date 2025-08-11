@@ -21,7 +21,7 @@ export default function ErrorBoundary({
       <div className="text-center space-y-4 max-w-md">
         <h2 className="text-2xl font-bold">Something went wrong!</h2>
         <p className="text-muted-foreground">
-          We've been notified and are working to fix the issue.
+          We&apos;ve been notified and are working to fix the issue.
         </p>
         <div className="flex gap-2 justify-center">
           <Button onClick={reset}>Try again</Button>

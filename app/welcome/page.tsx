@@ -29,7 +29,7 @@ export default async function WelcomePage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
-            <h3 className="font-medium mb-2">What's next?</h3>
+            <h3 className="font-medium mb-2">What&apos;s next?</h3>
             <ul className="text-sm space-y-1 text-muted-foreground">
               <li>• Log in with your email and password</li>
               <li>• Complete your profile information</li>

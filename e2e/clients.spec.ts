@@ -292,7 +292,7 @@ test.describe('Clients Page', () => {
       
       // Check that content is not stretched
       const container = page.locator('.flex-1.space-y-4');
-      const width = await container.evaluate((el) => el.offsetWidth);
+      const width = await container.evaluate((el) => (el as HTMLElement).offsetWidth);
       expect(width).toBeLessThanOrEqual(3840);
     });
   });

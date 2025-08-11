@@ -61,6 +61,7 @@ export const columns: ColumnDef<Client>[] = [
   {
     id: "name",
     accessorFn: (row) => `${row.first_name || ""} ${row.last_name || ""} ${row.email}`.toLowerCase(),
+    minSize: 250,
     header: ({ column }) => {
       return (
         <Button
@@ -106,6 +107,7 @@ export const columns: ColumnDef<Client>[] = [
   },
   {
     accessorKey: "company",
+    minSize: 200,
     header: "Company",
     cell: ({ row }) => {
       const company = row.original.client_profiles?.company_name

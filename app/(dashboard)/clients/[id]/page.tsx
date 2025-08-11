@@ -1,18 +1,22 @@
 import { redirect, notFound } from "next/navigation"
 import { createClient } from "@/shared/lib/supabase/server"
 import { ROUTES } from "@/shared/lib/constants"
-import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/shared/components/ui/card"
 import { Badge } from "@/shared/components/ui/badge"
 import { Button } from "@/shared/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs"
 import { Avatar, AvatarFallback } from "@/shared/components/ui/avatar"
-import type { Profile, ClientProfile, Service } from "@/shared/types"
+import { 
+  PageLayout, 
+  PageHeader, 
+  PageContent
+} from "@/shared/components/layout/page-layout"
+import { designSystem as ds } from "@/shared/lib/design-system"
 import {
   Building,
   Mail,
   Phone,
   Globe,
-  MapPin,
   Calendar,
   Briefcase,
   Activity,
@@ -88,18 +92,15 @@ export default async function ClientProfilePage({ params }: ClientPageProps) {
   }
   
   return (
-    <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between space-y-2 sm:space-y-0">
-        <div>
-          <h2 className="text-2xl md:text-3xl font-bold tracking-tight">
-            Client Profile
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            Complete client information and project history
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
+    <PageLayout>
+      <PageHeader
+        title="Client Profile"
+        subtitle="Complete client information and project history"
+      />
+      
+      <PageContent>
+        {/* Action Buttons */}
+        <div className="flex justify-end gap-2 mb-4">
           <Button variant="outline" size="sm">
             <MessageCircle className="h-4 w-4 mr-2" />
             Message
@@ -109,10 +110,9 @@ export default async function ClientProfilePage({ params }: ClientPageProps) {
             Edit
           </Button>
         </div>
-      </div>
-      
-      {/* Client Header Card */}
-      <Card>
+        
+        {/* Client Header Card */}
+        <Card>
         <CardContent className="p-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
             <Avatar className="h-16 w-16">
@@ -185,7 +185,8 @@ export default async function ClientProfilePage({ params }: ClientPageProps) {
             {clientProfile && (
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Company Information</CardTitle>
+                  <CardTitle>Company Information</CardTitle>
+                  <CardDescription>Details about the organization</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
@@ -223,7 +224,8 @@ export default async function ClientProfilePage({ params }: ClientPageProps) {
             {/* Investment Overview */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Investment Overview</CardTitle>
+                <CardTitle>Investment Overview</CardTitle>
+                <CardDescription>Financial summary</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -255,6 +257,7 @@ export default async function ClientProfilePage({ params }: ClientPageProps) {
           <Card>
             <CardHeader>
               <CardTitle>Services & Projects</CardTitle>
+              <CardDescription>All assigned services and projects</CardDescription>
             </CardHeader>
             <CardContent>
               {!services || services.length === 0 ? (
@@ -301,10 +304,13 @@ export default async function ClientProfilePage({ params }: ClientPageProps) {
         <TabsContent value="activity" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Activity className="h-5 w-5" />
-                Activity Timeline
-              </CardTitle>
+              <div className={ds.layout.flex.between}>
+                <div>
+                  <CardTitle>Activity Timeline</CardTitle>
+                  <CardDescription>Recent interactions and updates</CardDescription>
+                </div>
+                <Activity className="h-5 w-5 text-muted-foreground" />
+              </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -323,6 +329,7 @@ export default async function ClientProfilePage({ params }: ClientPageProps) {
           <Card>
             <CardHeader>
               <CardTitle>Contact Information</CardTitle>
+              <CardDescription>Ways to reach this client</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid gap-4">
@@ -365,6 +372,7 @@ export default async function ClientProfilePage({ params }: ClientPageProps) {
           </Card>
         </TabsContent>
       </Tabs>
-    </div>
+      </PageContent>
+    </PageLayout>
   )
 }

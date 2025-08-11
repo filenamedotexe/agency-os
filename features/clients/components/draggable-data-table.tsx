@@ -20,7 +20,8 @@ import {
   DndContext,
   closestCenter,
   KeyboardSensor,
-  PointerSensor,
+  MouseSensor,
+  TouchSensor,
   useSensor,
   useSensors,
   DragEndEvent,
@@ -31,18 +32,9 @@ import {
   sortableKeyboardCoordinates,
   horizontalListSortingStrategy,
 } from "@dnd-kit/sortable"
-import {
-  useSortable,
-} from "@dnd-kit/sortable"
+import { useSortable } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/shared/components/ui/table"
+import { restrictToHorizontalAxis } from "@dnd-kit/modifiers"
 import { Button } from "@/shared/components/ui/button"
 import { Input } from "@/shared/components/ui/input"
 import {
@@ -51,14 +43,12 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/shared/components/ui/dropdown-menu"
-import { ChevronDown, Search, Filter, Plus, X, GripVertical } from "lucide-react"
+import { ChevronDown, Search, X, GripVertical } from "lucide-react"
 import { Card, CardContent } from "@/shared/components/ui/card"
 import { Badge } from "@/shared/components/ui/badge"
-import { ScrollArea, ScrollBar } from "@/shared/components/ui/scroll-area"
 import { FilterSheet } from "./filter-sheet"
 import { DataTableFacetedFilter } from "@/shared/components/ui/data-table-faceted-filter"
 import { AddClientDialog } from "./add-client-dialog"
-// Define draggable header props locally
 interface DraggableHeaderProps<TData> {
   column: any
   table: any
@@ -71,38 +61,39 @@ interface DataTableProps<TData, TValue> {
   onDataChange?: () => void
 }
 
-// Draggable table header component
-function DraggableTableHeader<TData>({ column, table }: DraggableHeaderProps<TData>) {
-  // Actions column should not be draggable
+function DraggableTableHeader<TData>({ column }: DraggableHeaderProps<TData>) {
   const isDraggable = column.id !== 'actions' && column.id !== 'select'
   
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useSortable({
     id: column.id,
     disabled: !isDraggable,
   })
 
-  const style = isDraggable ? {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-    cursor: isDragging ? 'grabbing' : 'grab',
-  } : {}
+  const style: React.CSSProperties = {
+    transform: CSS.Translate.toString(transform),
+    opacity: isDragging ? 0.8 : 1,
+  }
 
   return (
-    <TableHead ref={setNodeRef} style={style} className="relative">
+    <th
+      ref={setNodeRef}
+      style={style}
+      className="h-12 px-4 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0"
+    >
       <div className="flex items-center gap-2">
         {isDraggable && (
           <button
             {...attributes}
             {...listeners}
             className="cursor-grab hover:text-primary touch-none"
+            aria-label={`Drag to reorder ${column.id} column`}
           >
             <GripVertical className="h-4 w-4" />
           </button>
         )}
         {flexRender(column.column.columnDef.header, column.getContext())}
       </div>
-    </TableHead>
+    </th>
   )
 }
 
@@ -117,13 +108,7 @@ export function DraggableDataTable<TData, TValue>({
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = React.useState({})
   const [globalFilter, setGlobalFilter] = React.useState("")
-  const [columnOrder, setColumnOrder] = React.useState<ColumnOrderState>(() => {
-    // Get default order from columns, ensuring actions is always last
-    const defaultOrder = columns
-      .filter(col => col.id !== 'actions')
-      .map((column) => typeof column.id === 'string' ? column.id : column.toString())
-    return [...defaultOrder, 'actions']
-  })
+  const [columnOrder, setColumnOrder] = React.useState<ColumnOrderState>([])
   const [selectedFilters, setSelectedFilters] = React.useState<{
     industries: string[]
     sizes: string[]
@@ -133,26 +118,6 @@ export function DraggableDataTable<TData, TValue>({
     sizes: [],
     statuses: [],
   })
-
-  // Load saved column order from localStorage
-  React.useEffect(() => {
-    const savedOrder = localStorage.getItem('clientsTableColumnOrder')
-    if (savedOrder) {
-      try {
-        const parsed = JSON.parse(savedOrder)
-        // Ensure actions column is always last
-        const withoutActions = parsed.filter((id: string) => id !== 'actions')
-        setColumnOrder([...withoutActions, 'actions'])
-      } catch (e) {
-        // Failed to parse saved column order, using default
-      }
-    }
-  }, [])
-
-  // Save column order to localStorage when it changes
-  React.useEffect(() => {
-    localStorage.setItem('clientsTableColumnOrder', JSON.stringify(columnOrder))
-  }, [columnOrder])
 
   const table = useReactTable({
     data,
@@ -178,37 +143,61 @@ export function DraggableDataTable<TData, TValue>({
     },
   })
 
-  // Drag and drop sensors
+  // Initialize column order from table
+  React.useEffect(() => {
+    if (columnOrder.length === 0 && table.getAllColumns().length > 0) {
+      const allColumns = table.getAllColumns().map(col => col.id)
+      
+      const savedOrder = localStorage.getItem('clientsTableColumnOrder')
+      if (savedOrder) {
+        try {
+          const parsed = JSON.parse(savedOrder)
+          // Make sure all columns are included
+          const validOrder = allColumns.filter(id => parsed.includes(id))
+          const missingColumns = allColumns.filter(id => !parsed.includes(id))
+          setColumnOrder([...validOrder, ...missingColumns])
+          return
+        } catch (e) {}
+      }
+      // Set default order from all columns
+      setColumnOrder(allColumns)
+    }
+  }, [table, columnOrder.length])
+
+  React.useEffect(() => {
+    if (columnOrder.length > 0) {
+      localStorage.setItem('clientsTableColumnOrder', JSON.stringify(columnOrder))
+    }
+  }, [columnOrder])
+
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(MouseSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 250,
+        tolerance: 5,
+      },
+    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
   )
 
-  // Handle drag end
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event
-
-    if (active.id !== over?.id && active.id !== 'actions' && over?.id !== 'actions') {
-      setColumnOrder((items) => {
-        const oldIndex = items.indexOf(active.id as string)
-        const newIndex = items.indexOf(over?.id as string)
-        
-        // Don't allow moving past the actions column
-        if (newIndex >= items.indexOf('actions')) {
-          return items
-        }
-        
-        const newOrder = arrayMove(items, oldIndex, newIndex)
-        // Ensure actions stays at the end
-        const withoutActions = newOrder.filter(id => id !== 'actions')
-        return [...withoutActions, 'actions']
-      })
-    }
+    if (!active || !over || active.id === over.id) return
+    
+    setColumnOrder((items) => {
+      const oldIndex = items.indexOf(active.id as string)
+      const newIndex = items.indexOf(over.id as string)
+      return arrayMove(items, oldIndex, newIndex)
+    })
   }
 
-  // Debounced search handler
   const debouncedSearch = React.useMemo(
     () => debounce((value: string) => {
       table.getColumn("name")?.setFilterValue(value)
@@ -216,7 +205,6 @@ export function DraggableDataTable<TData, TValue>({
     [table]
   )
 
-  // Filter options (in production, these would come from the data)
   const industryOptions = [
     { label: "Technology", value: "technology" },
     { label: "Finance", value: "finance" },
@@ -330,12 +318,8 @@ export function DraggableDataTable<TData, TValue>({
             variant="outline"
             size="sm"
             onClick={() => {
-              const defaultOrder = columns
-                .filter(col => col.id !== 'actions')
-                .map((column) => 
-                  typeof column.id === 'string' ? column.id : column.toString()
-                )
-              setColumnOrder([...defaultOrder, 'actions'])
+              const defaultOrder = table.getAllColumns().map(col => col.id)
+              setColumnOrder(defaultOrder)
               localStorage.removeItem('clientsTableColumnOrder')
             }}
           >
@@ -347,69 +331,90 @@ export function DraggableDataTable<TData, TValue>({
       </div>
 
       {/* Desktop Table View with Draggable Headers */}
-      <div className="hidden md:block rounded-md border">
-        <ScrollArea className="w-full">
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-          >
-            <Table>
-              <TableHeader>
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <TableRow key={headerGroup.id}>
-                    <SortableContext
-                      items={columnOrder.filter(id => id !== 'actions' && id !== 'select')}
-                      strategy={horizontalListSortingStrategy}
-                    >
-                      {headerGroup.headers.map((header) => {
-                        return (
+      <div className="hidden md:block">
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+          modifiers={[restrictToHorizontalAxis]}
+        >
+          <div className="rounded-md border" style={{ maxHeight: '70vh', overflow: 'auto' }}>
+            <table className="w-full caption-bottom text-sm">
+              <thead className="[&_tr]:border-b">
+                {table.getHeaderGroups().map((headerGroup) => {
+                  // Sort headers based on columnOrder
+                  const orderedHeaders = columnOrder.length > 0 
+                    ? columnOrder
+                        .map(columnId => headerGroup.headers.find(h => h.id === columnId))
+                        .filter(Boolean)
+                    : headerGroup.headers
+                  
+                  return (
+                    <tr key={headerGroup.id} className="border-b transition-colors hover:bg-muted/50">
+                      <SortableContext
+                        items={columnOrder}
+                        strategy={horizontalListSortingStrategy}
+                      >
+                        {orderedHeaders.map((header) => header && (
                           <DraggableTableHeader
                             key={header.id}
                             column={header}
                             table={table}
                           />
-                        )
-                      })}
-                    </SortableContext>
-                  </TableRow>
-                ))}
-              </TableHeader>
-              <TableBody>
+                        ))}
+                      </SortableContext>
+                    </tr>
+                  )
+                })}
+              </thead>
+              <tbody className="[&_tr:last-child]:border-0">
                 {table.getRowModel().rows?.length ? (
                   table.getRowModel().rows.map((row) => (
-                    <TableRow
+                    <tr
                       key={row.id}
-                      data-state={row.getIsSelected() && "selected"}
+                      className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted"
+                      data-state={row.getIsSelected() ? "selected" : undefined}
                     >
-                      {row.getVisibleCells().map((cell) => (
-                        <TableCell key={cell.id}>
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext()
-                          )}
-                        </TableCell>
-                      ))}
-                    </TableRow>
+                      {columnOrder.length > 0
+                        ? columnOrder
+                            .map(columnId => row.getVisibleCells().find(cell => cell.column.id === columnId))
+                            .filter(Boolean)
+                            .map((cell) => cell && (
+                              <td key={cell.id} className="p-4 align-middle [&:has([role=checkbox])]:pr-0">
+                                {flexRender(
+                                  cell.column.columnDef.cell,
+                                  cell.getContext()
+                                )}
+                              </td>
+                            ))
+                        : row.getVisibleCells().map((cell) => (
+                            <td key={cell.id} className="p-4 align-middle [&:has([role=checkbox])]:pr-0">
+                              {flexRender(
+                                cell.column.columnDef.cell,
+                                cell.getContext()
+                              )}
+                            </td>
+                          ))
+                      }
+                    </tr>
                   ))
                 ) : (
-                  <TableRow>
-                    <TableCell
+                  <tr className="border-b transition-colors hover:bg-muted/50">
+                    <td
                       colSpan={columns.length}
-                      className="h-24 text-center"
+                      className="h-24 text-center p-4 align-middle"
                     >
                       No clients found.
-                    </TableCell>
-                  </TableRow>
+                    </td>
+                  </tr>
                 )}
-              </TableBody>
-            </Table>
-          </DndContext>
-          <ScrollBar orientation="horizontal" />
-        </ScrollArea>
+              </tbody>
+            </table>
+          </div>
+        </DndContext>
       </div>
 
-      {/* Mobile Card View - Visible only on mobile */}
+      {/* Mobile Card View - Visible only on mobile and tablet */}
       <div className="md:hidden space-y-4">
         {table.getRowModel().rows?.length ? (
           table.getRowModel().rows.map((row) => {
