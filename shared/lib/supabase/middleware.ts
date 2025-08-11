@@ -48,8 +48,8 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // If user is logged in and tries to access login/signup, redirect to appropriate dashboard
-  if (user && (request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/signup')) {
+  // If user is logged in and tries to access login/signup or dashboard, redirect to appropriate dashboard
+  if (user && (request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/signup' || request.nextUrl.pathname === '/dashboard')) {
     const { data: profile } = await supabase
       .from('profiles')
       .select('role')
@@ -64,7 +64,8 @@ export async function updateSession(request: NextRequest) {
     } else if (profile?.role === 'client') {
       url.pathname = '/client'
     } else {
-      url.pathname = '/dashboard'
+      // Fallback to admin if role is not set
+      url.pathname = '/admin'
     }
     return NextResponse.redirect(url)
   }

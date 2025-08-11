@@ -7,16 +7,23 @@ import { v4 as uuidv4 } from 'uuid'
 export async function getOrCreateConversation(clientId: string) {
   const supabase = await createClient()
   
+  // Check authentication
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+  
   // Check if conversation exists
-  const { data: existing } = await supabase
+  const { data: existing, error: existingError } = await supabase
     .from('conversations')
     .select('*')
     .eq('client_id', clientId)
-    .single()
+    .maybeSingle()
+  
+  if (existingError) {
+    return { error: existingError }
+  }
   
   if (existing) return { conversation: existing }
   
-  // Create new conversation
   const { data: conversation, error: convError } = await supabase
     .from('conversations')
     .insert({
@@ -35,16 +42,35 @@ export async function getOrCreateConversation(clientId: string) {
     .single()
   
   if (clientProfile) {
-    await supabase
+    const { error: clientParticipantError } = await supabase
       .from('conversation_participants')
       .insert({
         conversation_id: conversation.id,
         user_id: clientId
       })
+      
+    if (clientParticipantError) {
+      console.error('Error adding client participant:', clientParticipantError)
+    }
+    
+    // Add current user (admin/team) as participant
+    const { error: currentUserError } = await supabase
+      .from('conversation_participants')
+      .insert({
+        conversation_id: conversation.id,
+        user_id: user.id
+      })
+      
+    if (currentUserError) {
+      console.error('Error adding current user participant:', currentUserError)
+    }
     
     // Add assigned team members (if any)
-    // This would check service assignments and add relevant team members
-    await addTeamParticipants(conversation.id, clientId)
+    try {
+      await addTeamParticipants(conversation.id, clientId)
+    } catch (error) {
+      console.error('Error adding team participants:', error)
+    }
   }
   
   return { conversation }

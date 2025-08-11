@@ -3,6 +3,7 @@
 import * as React from "react"
 import { useRouter } from "next/navigation"
 import { debounce } from "@/shared/lib/helpers"
+import { formatDate } from "@/shared/lib/format-date"
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -372,8 +373,12 @@ export function DraggableDataTable<TData, TValue>({
                   table.getRowModel().rows.map((row) => (
                     <tr
                       key={row.id}
-                      className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted"
+                      className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted cursor-pointer"
                       data-state={row.getIsSelected() ? "selected" : undefined}
+                      onClick={() => {
+                        const client = row.original as any;
+                        router.push(`/clients/${client.id}`);
+                      }}
                     >
                       {columnOrder.length > 0
                         ? columnOrder
@@ -455,12 +460,15 @@ export function DraggableDataTable<TData, TValue>({
                     
                     <div className="flex items-center justify-between pt-2 border-t">
                       <p className="text-xs text-muted-foreground">
-                        Joined {new Date(client.created_at).toLocaleDateString()}
+                        Joined {formatDate(client.created_at)}
                       </p>
                       <Button 
                         variant="ghost" 
                         size="sm"
-                        onClick={() => router.push(`/clients/${client.id}`)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          router.push(`/clients/${client.id}`)
+                        }}
                       >
                         View Profile →
                       </Button>

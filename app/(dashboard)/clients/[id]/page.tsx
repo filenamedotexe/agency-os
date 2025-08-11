@@ -21,8 +21,8 @@ import {
   Briefcase,
   Activity,
   Edit,
-  MessageCircle,
 } from "lucide-react"
+import { MessageClientButton } from "@/features/clients/components/message-client-button"
 
 interface ClientPageProps {
   params: Promise<{ id: string }>
@@ -101,10 +101,10 @@ export default async function ClientProfilePage({ params }: ClientPageProps) {
       <PageContent>
         {/* Action Buttons */}
         <div className="flex justify-end gap-2 mb-4">
-          <Button variant="outline" size="sm">
-            <MessageCircle className="h-4 w-4 mr-2" />
-            Message
-          </Button>
+          <MessageClientButton 
+            clientId={id} 
+            clientName={`${client.first_name} ${client.last_name}`}
+          />
           <Button variant="outline" size="sm">
             <Edit className="h-4 w-4 mr-2" />
             Edit

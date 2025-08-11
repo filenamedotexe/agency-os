@@ -122,6 +122,7 @@ export function ChatInput({
           disabled={disabled || uploading || (!message.trim() && attachments.length === 0)}
           size="icon"
           className="flex-shrink-0"
+          aria-label="Send message"
         >
           <Send className="h-4 w-4" />
         </Button>

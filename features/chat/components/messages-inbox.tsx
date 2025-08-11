@@ -8,6 +8,9 @@ import { Avatar, AvatarFallback } from '@/shared/components/ui/avatar'
 import { formatDistanceToNow } from 'date-fns'
 import { Badge } from '@/shared/components/ui/badge'
 import { ScrollArea } from '@/shared/components/ui/scroll-area'
+import { Button } from '@/shared/components/ui/button'
+import { Plus } from 'lucide-react'
+import { NewMessageModal } from './new-message-modal'
 
 interface MessagesInboxProps {
   userId: string
@@ -17,16 +20,18 @@ export function MessagesInbox({ userId }: MessagesInboxProps) {
   const [conversations, setConversations] = useState<any[]>([])
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [showNewMessageModal, setShowNewMessageModal] = useState(false)
   
-  useEffect(() => {
-    async function loadConversations() {
-      const { conversations: data } = await getUserConversations()
-      setConversations(data)
-      if (data.length > 0 && !selectedConversationId) {
-        setSelectedConversationId(data[0].id)
-      }
-      setLoading(false)
+  const loadConversations = async () => {
+    const { conversations: data } = await getUserConversations()
+    setConversations(data)
+    if (data.length > 0 && !selectedConversationId) {
+      setSelectedConversationId(data[0].id)
     }
+    setLoading(false)
+  }
+
+  useEffect(() => {
     loadConversations()
     
     // Refresh every 30 seconds
@@ -41,7 +46,17 @@ export function MessagesInbox({ userId }: MessagesInboxProps) {
       {/* Conversation List */}
       <div className="w-80 border-r flex flex-col">
         <div className="p-4 border-b">
-          <h2 className="font-semibold text-lg">Messages</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="font-semibold text-lg">Messages</h2>
+            <Button 
+              size="sm" 
+              onClick={() => setShowNewMessageModal(true)}
+              className="gap-1"
+            >
+              <Plus className="h-4 w-4" />
+              New
+            </Button>
+          </div>
         </div>
         
         <ScrollArea className="flex-1">
@@ -137,6 +152,16 @@ export function MessagesInbox({ userId }: MessagesInboxProps) {
           </div>
         )}
       </div>
+      
+      <NewMessageModal 
+        open={showNewMessageModal}
+        onOpenChange={setShowNewMessageModal}
+        onConversationCreated={(conversationId) => {
+          setSelectedConversationId(conversationId)
+          // Refresh conversations list
+          loadConversations()
+        }}
+      />
     </div>
   )
 }
