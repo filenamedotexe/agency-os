@@ -63,7 +63,7 @@ const navigation: NavItem[] = [
   },
   {
     title: "Settings",
-    url: "/settings",
+    url: "/admin/settings",
     icon: Settings,
     roles: ["admin"]
   }
