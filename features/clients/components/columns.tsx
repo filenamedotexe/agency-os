@@ -6,6 +6,7 @@ import { Button } from "@/shared/components/ui/button"
 import { Checkbox } from "@/shared/components/ui/checkbox"
 import { ArrowUpDown, Phone, Globe, Building2 } from "lucide-react"
 import { ClientActions } from "./client-actions"
+import { designSystem as ds } from "@/shared/lib/design-system"
 
 export type Client = {
   id: string
@@ -79,7 +80,7 @@ export const columns: ColumnDef<Client>[] = [
       const fullName = `${firstName} ${lastName}`.trim() || "Unknown"
       
       return (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3 sm:p-4">
           <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
             <span className="text-xs font-medium">
               {firstName[0]?.toUpperCase() || "?"}
@@ -117,7 +118,7 @@ export const columns: ColumnDef<Client>[] = [
       
       return (
         <div>
-          <p className="font-medium flex items-center gap-1">
+          <p className="font-medium flex items-center gap-4">
             <Building2 className="h-3 w-3" />
             {company}
           </p>
@@ -156,7 +157,7 @@ export const columns: ColumnDef<Client>[] = [
           href={siteUrl} 
           target="_blank" 
           rel="noopener noreferrer" 
-          className="text-blue-600 hover:underline text-sm flex items-center gap-1"
+          className="text-blue-600 hover:underline text-sm flex items-center gap-4"
         >
           <Globe className="h-3 w-3" />
           View Site
@@ -174,13 +175,13 @@ export const columns: ColumnDef<Client>[] = [
       return (
         <div className="space-y-1">
           {phone && (
-            <p className="text-sm flex items-center gap-1">
+            <p className="text-sm flex items-center gap-4">
               <Phone className="h-3 w-3" />
               {phone}
             </p>
           )}
           {website && (
-            <p className="text-sm flex items-center gap-1">
+            <p className="text-sm flex items-center gap-4">
               <Globe className="h-3 w-3" />
               <a href={website} target="_blank" rel="noopener noreferrer" 
                  className="text-blue-600 hover:underline">
@@ -225,7 +226,7 @@ export const columns: ColumnDef<Client>[] = [
       }
       
       return (
-        <div className="flex flex-wrap gap-1">
+        <div className="flex flex-wrap gap-4">
           {tags.slice(0, 2).map((tag, index) => (
             <Badge key={index} variant="secondary" className="text-xs">
               {tag}

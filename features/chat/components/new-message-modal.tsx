@@ -10,6 +10,7 @@ import { Building, Search, MessageCircle } from 'lucide-react'
 import { useToast } from '@/shared/hooks/use-toast'
 import { getOrCreateConversation } from '@/app/actions/chat'
 import { createClient } from '@/shared/lib/supabase/client'
+import { designSystem as ds } from "@/shared/lib/design-system"
 
 interface NewMessageModalProps {
   open: boolean
@@ -169,7 +170,7 @@ export function NewMessageModal({ open, onOpenChange, onConversationCreated }: N
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+          <DialogTitle className="flex items-center gap-3 sm:p-4">
             <MessageCircle className="h-5 w-5" />
             New Message
           </DialogTitle>
@@ -204,16 +205,16 @@ export function NewMessageModal({ open, onOpenChange, onConversationCreated }: N
                 </div>
               </div>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {filteredClients.map((client) => (
                   <Button
                     key={client.id}
                     variant="ghost"
-                    className="w-full justify-start p-3 h-auto"
+                    className="w-full justify-start p-3 sm:p-4 h-auto"
                     onClick={() => handleStartConversation(client)}
                     disabled={creatingConversation}
                   >
-                    <div className="flex items-center gap-3 w-full">
+                    <div className="flex items-center gap-3 sm:p-4 w-full">
                       <Avatar className="h-10 w-10">
                         <AvatarFallback>
                           {getClientInitials(client)}

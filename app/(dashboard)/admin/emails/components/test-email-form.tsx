@@ -82,8 +82,8 @@ export function TestEmailForm() {
   return (
     <div className="space-y-6">
       <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
+        <CardHeader className="space-y-1">
+          <div className="flex items-center gap-3 sm:p-4">
             <Mail className="h-5 w-5" />
             <div>
               <CardTitle>Send Test Email</CardTitle>
@@ -93,7 +93,7 @@ export function TestEmailForm() {
             </div>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-4 sm:p-6">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <FormField
@@ -173,7 +173,7 @@ export function TestEmailForm() {
               <Button 
                 type="submit" 
                 disabled={sending || !form.formState.isValid}
-                className="w-full sm:w-auto gap-2"
+                className="w-full sm:w-auto gap-3 sm:p-4"
               >
                 <Send className={`h-4 w-4 ${sending ? 'animate-pulse' : ''}`} />
                 {sending ? "Sending..." : "Send Test Email"}
@@ -199,10 +199,10 @@ export function TestEmailForm() {
 
       {/* Usage Tips */}
       <Card>
-        <CardHeader>
+        <CardHeader className="space-y-1">
           <CardTitle className="text-sm font-medium">Testing Tips</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-2">
+        <CardContent className="space-y-3">
           <div className="text-sm space-y-1">
             <p className="text-muted-foreground">
               • Test emails use sample data (names, companies, dates)

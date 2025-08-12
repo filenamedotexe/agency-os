@@ -20,6 +20,7 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/shared/components/ui/sidebar"
+import { designSystem as ds } from "@/shared/lib/design-system"
 import {
   Users,
   Briefcase,
@@ -173,7 +174,7 @@ export function AppSidebar({ userRole, user }: AppSidebarProps) {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <div className="flex items-center gap-2 px-2">
+            <div className="flex items-center gap-3 sm:p-4 px-3 sm:px-4">
               <Avatar className="h-8 w-8">
                 <AvatarFallback>
                   {getUserInitials(user?.email)}

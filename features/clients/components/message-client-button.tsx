@@ -6,6 +6,7 @@ import { Button } from '@/shared/components/ui/button'
 import { MessageCircle } from 'lucide-react'
 import { getOrCreateConversation } from '@/app/actions/chat'
 import { useToast } from '@/shared/hooks/use-toast'
+import { designSystem as ds } from "@/shared/lib/design-system"
 
 interface MessageClientButtonProps {
   clientId: string

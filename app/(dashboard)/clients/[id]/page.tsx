@@ -100,7 +100,7 @@ export default async function ClientProfilePage({ params }: ClientPageProps) {
       
       <PageContent>
         {/* Action Buttons */}
-        <div className="flex justify-end gap-2 mb-4">
+        <div className="flex justify-end gap-3 sm:p-4 mb-4">
           <MessageClientButton 
             clientId={id} 
             clientName={`${client.first_name} ${client.last_name}`}
@@ -113,7 +113,7 @@ export default async function ClientProfilePage({ params }: ClientPageProps) {
         
         {/* Client Header Card */}
         <Card>
-        <CardContent className="p-6">
+        <CardContent className="p-4 sm:p-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
             <Avatar className="h-16 w-16">
               <AvatarFallback className="text-lg font-semibold">
@@ -122,7 +122,7 @@ export default async function ClientProfilePage({ params }: ClientPageProps) {
             </Avatar>
             
             <div className="flex-1 space-y-1">
-              <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:p-4">
                 <h3 className="text-xl font-semibold">
                   {client.first_name} {client.last_name}
                 </h3>
@@ -130,19 +130,19 @@ export default async function ClientProfilePage({ params }: ClientPageProps) {
               </div>
               
               {clientProfile?.company_name && (
-                <p className="text-muted-foreground flex items-center gap-1">
+                <p className="text-muted-foreground flex items-center gap-4">
                   <Building className="h-4 w-4" />
                   {clientProfile.company_name}
                 </p>
               )}
               
               <div className="flex flex-col sm:flex-row gap-4 text-sm text-muted-foreground mt-2">
-                <span className="flex items-center gap-1">
+                <span className="flex items-center gap-4">
                   <Calendar className="h-4 w-4" />
                   Joined {new Date(client.created_at).toLocaleDateString()}
                 </span>
                 {clientProfile?.industry && (
-                  <span className="flex items-center gap-1">
+                  <span className="flex items-center gap-4">
                     <Briefcase className="h-4 w-4" />
                     {clientProfile.industry}
                   </span>
@@ -151,7 +151,7 @@ export default async function ClientProfilePage({ params }: ClientPageProps) {
             </div>
             
             {/* Quick Stats */}
-            <div className="grid grid-cols-3 gap-4 text-center w-full sm:w-auto">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-center w-full sm:w-auto">
               <div>
                 <p className="text-2xl font-bold text-primary">{totalServices}</p>
                 <p className="text-xs text-muted-foreground">Services</p>
@@ -184,12 +184,12 @@ export default async function ClientProfilePage({ params }: ClientPageProps) {
             {/* Company Information */}
             {clientProfile && (
               <Card>
-                <CardHeader>
+                <CardHeader className="space-y-1">
                   <CardTitle>Company Information</CardTitle>
                   <CardDescription>Details about the organization</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-muted-foreground">Company Size</span>
                       <span className="font-medium">{clientProfile.company_size || "Not specified"}</span>
@@ -210,7 +210,7 @@ export default async function ClientProfilePage({ params }: ClientPageProps) {
                         href={clientProfile.website}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-2 text-primary hover:underline"
+                        className="flex items-center gap-3 sm:p-4 text-primary hover:underline"
                       >
                         <Globe className="h-4 w-4" />
                         Visit Website
@@ -223,11 +223,11 @@ export default async function ClientProfilePage({ params }: ClientPageProps) {
             
             {/* Investment Overview */}
             <Card>
-              <CardHeader>
+              <CardHeader className="space-y-1">
                 <CardTitle>Investment Overview</CardTitle>
                 <CardDescription>Financial summary</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-4 sm:p-6">
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">Total Investment</span>
@@ -236,7 +236,7 @@ export default async function ClientProfilePage({ params }: ClientPageProps) {
                     </span>
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-4 pt-2 border-t text-center">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t text-center">
                     <div>
                       <p className="text-lg font-semibold text-green-600">{activeServices}</p>
                       <p className="text-xs text-muted-foreground">Active Projects</p>
@@ -255,11 +255,11 @@ export default async function ClientProfilePage({ params }: ClientPageProps) {
         {/* Services Tab */}
         <TabsContent value="services" className="space-y-4">
           <Card>
-            <CardHeader>
+            <CardHeader className="space-y-1">
               <CardTitle>Services & Projects</CardTitle>
               <CardDescription>All assigned services and projects</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-4 sm:p-6">
               {!services || services.length === 0 ? (
                 <div className="text-center py-8">
                   <p className="text-muted-foreground">No services assigned yet</p>
@@ -267,7 +267,7 @@ export default async function ClientProfilePage({ params }: ClientPageProps) {
               ) : (
                 <div className="space-y-4">
                   {services.map((service) => (
-                    <div key={service.id} className="p-4 border rounded-lg">
+                    <div key={service.id} className="p-4 sm:p-6 border rounded-lg">
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <h4 className="font-medium">{service.project_name}</h4>
@@ -303,7 +303,7 @@ export default async function ClientProfilePage({ params }: ClientPageProps) {
         {/* Activity Tab */}
         <TabsContent value="activity" className="space-y-4">
           <Card>
-            <CardHeader>
+            <CardHeader className="space-y-1">
               <div className={ds.layout.flex.between}>
                 <div>
                   <CardTitle>Activity Timeline</CardTitle>
@@ -312,7 +312,7 @@ export default async function ClientProfilePage({ params }: ClientPageProps) {
                 <Activity className="h-5 w-5 text-muted-foreground" />
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-4 sm:p-6">
               <div className="space-y-4">
                 <div className="text-center py-8 text-muted-foreground">
                   <Activity className="h-8 w-8 mx-auto mb-2 opacity-50" />
@@ -327,13 +327,13 @@ export default async function ClientProfilePage({ params }: ClientPageProps) {
         {/* Contact Tab */}
         <TabsContent value="contact" className="space-y-4">
           <Card>
-            <CardHeader>
+            <CardHeader className="space-y-1">
               <CardTitle>Contact Information</CardTitle>
               <CardDescription>Ways to reach this client</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid gap-4">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 sm:p-4">
                   <Mail className="h-4 w-4 text-muted-foreground" />
                   <div>
                     <p className="font-medium">{client.email}</p>
@@ -342,7 +342,7 @@ export default async function ClientProfilePage({ params }: ClientPageProps) {
                 </div>
                 
                 {clientProfile?.phone && (
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 sm:p-4">
                     <Phone className="h-4 w-4 text-muted-foreground" />
                     <div>
                       <p className="font-medium">{clientProfile.phone}</p>
@@ -352,7 +352,7 @@ export default async function ClientProfilePage({ params }: ClientPageProps) {
                 )}
                 
                 {clientProfile?.website && (
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 sm:p-4">
                     <Globe className="h-4 w-4 text-muted-foreground" />
                     <div>
                       <a 

@@ -3,6 +3,7 @@
 import { MessageCircle, Phone, Mail } from 'lucide-react'
 import { Button } from '@/shared/components/ui/button'
 import { cn } from '@/shared/lib/utils'
+import { designSystem as ds } from "@/shared/lib/design-system"
 
 export type MessageType = 'chat' | 'sms' | 'email'
 
@@ -35,7 +36,7 @@ export function MessageTypeToggle({
           onClick={() => onChange(type)}
           disabled={disabled}
           className={cn(
-            "flex items-center gap-1 text-xs h-7 px-2",
+            "flex items-center gap-1 text-xs h-7 px-3 sm:px-4",
             value === type 
               ? "bg-primary text-primary-foreground" 
               : "hover:bg-muted"

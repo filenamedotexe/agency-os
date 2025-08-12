@@ -17,6 +17,7 @@ import { ScrollArea } from "@/shared/components/ui/scroll-area"
 import { Checkbox } from "@/shared/components/ui/checkbox"
 import { Label } from "@/shared/components/ui/label"
 import { Filter, X } from "lucide-react"
+import { designSystem as ds } from "@/shared/lib/design-system"
 
 interface FilterOption {
   label: string
@@ -112,7 +113,7 @@ export function FilterSheet({
             {/* Industry Filter */}
             <div>
               <h4 className="font-medium mb-3">Industry</h4>
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {industries.map((option) => (
                   <div key={option.value} className="flex items-center space-x-2">
                     <Checkbox
@@ -143,7 +144,7 @@ export function FilterSheet({
             {/* Company Size Filter */}
             <div>
               <h4 className="font-medium mb-3">Company Size</h4>
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {sizes.map((option) => (
                   <div key={option.value} className="flex items-center space-x-2">
                     <Checkbox
@@ -174,7 +175,7 @@ export function FilterSheet({
             {/* Status Filter */}
             <div>
               <h4 className="font-medium mb-3">Status</h4>
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {statuses.map((option) => (
                   <div key={option.value} className="flex items-center space-x-2">
                     <Checkbox
@@ -203,7 +204,7 @@ export function FilterSheet({
         </ScrollArea>
 
         <SheetFooter className="mt-6">
-          <div className="flex w-full gap-2">
+          <div className="flex w-full gap-3 sm:p-4">
             <Button
               variant="outline"
               onClick={clearFilters}

@@ -25,11 +25,11 @@ interface RecentActivityProps {
 export function RecentActivity({ activities, className }: RecentActivityProps) {
   return (
     <Card className={className}>
-      <CardHeader>
+      <CardHeader className="space-y-1">
         <CardTitle>Recent Activity</CardTitle>
         <CardDescription>Latest updates from your team</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-4 sm:p-6">
         <ScrollArea className="h-[300px] pr-4">
           <div className={ds.spacing.section.gap}>
             {activities.length === 0 ? (
@@ -43,7 +43,7 @@ export function RecentActivity({ activities, className }: RecentActivityProps) {
                 <div 
                   key={activity.id} 
                   className={cn(
-                    "flex items-start gap-3",
+                    "flex items-start gap-3 sm:p-4",
                     "pb-3 last:pb-0",
                     "border-b last:border-0"
                   )}

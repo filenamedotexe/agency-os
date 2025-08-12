@@ -5,6 +5,7 @@ import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog"
 
 import { cn } from "@/shared/lib/utils"
 import { buttonVariants } from "@/shared/components/ui/button"
+import { designSystem as ds } from "@/shared/lib/design-system"
 
 const AlertDialog = AlertDialogPrimitive.Root
 
@@ -51,7 +52,7 @@ const AlertDialogHeader = ({
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      "flex flex-col space-y-2 text-center sm:text-left",
+      "flex flex-col space-y-3 text-center sm:text-left",
       className
     )}
     {...props}

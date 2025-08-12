@@ -8,6 +8,7 @@ import { ClientAttachmentsModal } from './client-attachments-modal'
 import { getOrCreateConversation } from '@/app/actions/chat'
 import { cn } from '@/shared/lib/utils'
 import { motion, AnimatePresence } from 'framer-motion'
+import { designSystem as ds } from "@/shared/lib/design-system"
 
 interface FloatingChatProps {
   userId: string
@@ -116,11 +117,11 @@ export function FloatingChat({ userId, userRole, userName }: FloatingChatProps) 
           >
             {/* Header */}
             <div className="flex items-center justify-between p-3 sm:p-4 border-b">
-              <div className="flex items-center gap-2 min-w-0 flex-1">
+              <div className="flex items-center gap-3 sm:p-4 min-w-0 flex-1">
                 <MessageCircle className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
                 <span className="font-semibold text-sm sm:text-base truncate">Chat with Team</span>
               </div>
-              <div className="flex gap-1 flex-shrink-0">
+              <div className="flex gap-4 flex-shrink-0">
                 <Button
                   variant="ghost"
                   size="icon"

@@ -37,6 +37,7 @@ import {
 import { Input } from "@/shared/components/ui/input"
 import { Alert, AlertDescription } from "@/shared/components/ui/alert"
 import { Loader2, AlertCircle } from "lucide-react"
+import { designSystem as ds } from "@/shared/lib/design-system"
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -182,7 +183,7 @@ export function AuthForm({ mode }: AuthFormProps) {
             Enter your credentials to access your account
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-4 sm:p-6">
           <Form {...loginForm}>
             <form onSubmit={loginForm.handleSubmit(handleLogin)} className="space-y-4">
               {error && (
@@ -257,7 +258,7 @@ export function AuthForm({ mode }: AuthFormProps) {
           Enter your information to get started with AgencyOS
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-4 sm:p-6">
         <Form {...signupForm}>
           <form onSubmit={signupForm.handleSubmit(handleSignup)} className="space-y-4">
             {error && (
@@ -267,7 +268,7 @@ export function AuthForm({ mode }: AuthFormProps) {
               </Alert>
             )}
             
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField
                 control={signupForm.control}
                 name="firstName"

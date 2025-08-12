@@ -37,6 +37,7 @@ import { useSupabase } from "@/shared/hooks/use-supabase"
 import { formatError, logError } from "@/shared/lib/error-handling"
 import { Alert, AlertDescription } from "@/shared/components/ui/alert"
 import type { Client } from "./columns"
+import { designSystem as ds } from "@/shared/lib/design-system"
 
 // Phone number regex for international format
 const phoneRegex = /^[\+]?[(]?[0-9]{1,4}[)]?[-\s\.]?[(]?[0-9]{1,4}[)]?[-\s\.]?[0-9]{1,4}[-\s\.]?[0-9]{1,9}$/
@@ -342,7 +343,7 @@ export function EditClientDialog({ client, open, onOpenChange, onClientUpdated }
                     <FormLabel>Email</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <Mail className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Mail className="absolute left-2 top-3 sm:p-4.5 h-4 w-4 text-muted-foreground" />
                         <Input 
                           type="email" 
                           placeholder="john@company.com" 
@@ -467,7 +468,7 @@ export function EditClientDialog({ client, open, onOpenChange, onClientUpdated }
                       <FormLabel>Website (Optional)</FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <Globe className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                          <Globe className="absolute left-2 top-3 sm:p-4.5 h-4 w-4 text-muted-foreground" />
                           <Input 
                             placeholder="example.com" 
                             className="pl-8"
@@ -515,7 +516,7 @@ export function EditClientDialog({ client, open, onOpenChange, onClientUpdated }
                       <FormLabel>Duda Site URL (Optional)</FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <Globe className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                          <Globe className="absolute left-2 top-3 sm:p-4.5 h-4 w-4 text-muted-foreground" />
                           <Input 
                             placeholder="site.duda.co/site/..." 
                             className="pl-8"
@@ -547,7 +548,7 @@ export function EditClientDialog({ client, open, onOpenChange, onClientUpdated }
                       <FormLabel>LinkedIn</FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <Linkedin className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                          <Linkedin className="absolute left-2 top-3 sm:p-4.5 h-4 w-4 text-muted-foreground" />
                           <Input 
                             placeholder="linkedin.com/company/..." 
                             className="pl-8"
@@ -569,7 +570,7 @@ export function EditClientDialog({ client, open, onOpenChange, onClientUpdated }
                       <FormLabel>Twitter/X</FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <Twitter className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                          <Twitter className="absolute left-2 top-3 sm:p-4.5 h-4 w-4 text-muted-foreground" />
                           <Input 
                             placeholder="twitter.com/..." 
                             className="pl-8"
@@ -591,7 +592,7 @@ export function EditClientDialog({ client, open, onOpenChange, onClientUpdated }
                       <FormLabel>Facebook</FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <Facebook className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                          <Facebook className="absolute left-2 top-3 sm:p-4.5 h-4 w-4 text-muted-foreground" />
                           <Input 
                             placeholder="facebook.com/..." 
                             className="pl-8"
@@ -613,7 +614,7 @@ export function EditClientDialog({ client, open, onOpenChange, onClientUpdated }
                       <FormLabel>Instagram</FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <Instagram className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                          <Instagram className="absolute left-2 top-3 sm:p-4.5 h-4 w-4 text-muted-foreground" />
                           <Input 
                             placeholder="instagram.com/..." 
                             className="pl-8"

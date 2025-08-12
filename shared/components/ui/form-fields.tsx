@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { formatPhoneNumber, formatUrl } from "@/shared/lib/validations"
 import { Globe, Mail, Linkedin, Twitter, Facebook, Instagram } from "lucide-react"
 import type { Control } from "react-hook-form"
+import { designSystem as ds } from "@/shared/lib/design-system"
 
 interface BaseFieldProps {
   control: Control<any>
@@ -37,7 +38,7 @@ export function TextField({ control, name, label, placeholder, description, type
           <FormControl>
             {icon ? (
               <div className="relative">
-                <div className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground">
+                <div className="absolute left-2 top-3 sm:p-4.5 h-4 w-4 text-muted-foreground">
                   {icon}
                 </div>
                 <Input
@@ -99,7 +100,7 @@ export function UrlField({ control, name, label, placeholder, description, icon 
           <FormLabel>{label}</FormLabel>
           <FormControl>
             <div className="relative">
-              <div className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground">
+              <div className="absolute left-2 top-3 sm:p-4.5 h-4 w-4 text-muted-foreground">
                 {icon}
               </div>
               <Input

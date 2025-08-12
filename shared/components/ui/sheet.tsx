@@ -6,6 +6,7 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { X } from "lucide-react"
 
 import { cn } from "@/shared/lib/utils"
+import { designSystem as ds } from "@/shared/lib/design-system"
 
 const Sheet = SheetPrimitive.Root
 
@@ -80,7 +81,7 @@ const SheetHeader = ({
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      "flex flex-col space-y-2 text-center sm:text-left",
+      "flex flex-col space-y-3 text-center sm:text-left",
       className
     )}
     {...props}

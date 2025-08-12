@@ -20,6 +20,7 @@ import {
   ZoomOut
 } from 'lucide-react'
 import { cn } from '@/shared/lib/utils'
+import { designSystem as ds } from "@/shared/lib/design-system"
 
 interface FilePreviewModalProps {
   open: boolean
@@ -100,7 +101,7 @@ export function FilePreviewModal({ open, onOpenChange, file }: FilePreviewModalP
               onError={() => setError(true)}
             />
           </div>
-          <div className="absolute top-2 right-2 flex gap-2">
+          <div className="absolute top-3 sm:p-4 right-2 flex gap-3 sm:p-4">
             <Button
               size="sm"
               variant="secondary"
@@ -169,7 +170,7 @@ export function FilePreviewModal({ open, onOpenChange, file }: FilePreviewModalP
             title={file.name}
             onError={() => setError(true)}
           />
-          <div className="absolute top-2 right-2">
+          <div className="absolute top-3 sm:p-4 right-2">
             <Button
               size="sm"
               variant="secondary"
@@ -186,12 +187,12 @@ export function FilePreviewModal({ open, onOpenChange, file }: FilePreviewModalP
     if (isText) {
       return (
         <div className="relative">
-          <div className="bg-gray-50 rounded-lg p-4 min-h-[400px] max-h-[600px] overflow-auto">
+          <div className="bg-gray-50 rounded-lg p-4 sm:p-6 min-h-[400px] max-h-[600px] overflow-auto">
             <pre className="text-sm whitespace-pre-wrap font-mono">
               <TextFilePreview url={file.url} />
             </pre>
           </div>
-          <div className="absolute top-2 right-2">
+          <div className="absolute top-3 sm:p-4 right-2">
             <Button
               size="sm"
               variant="secondary"
@@ -236,11 +237,11 @@ export function FilePreviewModal({ open, onOpenChange, file }: FilePreviewModalP
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-6xl max-h-[90vh] w-[95vw] sm:w-full flex flex-col">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-3 text-base sm:text-lg">
+          <DialogTitle className="flex items-center gap-3 sm:p-4 text-base sm:text-lg">
             {getFileIcon()}
             <div className="flex-1 min-w-0">
               <span className="truncate block">{file.name}</span>
-              <div className="flex items-center gap-2 mt-1">
+              <div className="flex items-center gap-3 sm:p-4 mt-1">
                 <Badge variant="outline" className="text-xs">
                   {file.type.split('/')[1]?.toUpperCase() || 'FILE'}
                 </Badge>
@@ -252,7 +253,7 @@ export function FilePreviewModal({ open, onOpenChange, file }: FilePreviewModalP
                 </span>
               </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-3 sm:p-4">
               <Button
                 variant="outline"
                 size="sm"

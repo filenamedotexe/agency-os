@@ -37,6 +37,7 @@ import { ScrollArea, ScrollBar } from "@/shared/components/ui/scroll-area"
 import { FilterSheet } from "./filter-sheet"
 import { DataTableFacetedFilter } from "@/shared/components/ui/data-table-faceted-filter"
 import { AddClientDialog } from "./add-client-dialog"
+import { designSystem as ds } from "@/shared/lib/design-system"
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -124,7 +125,7 @@ export function ClientsDataTable<TData, TValue>({
       {/* Toolbar */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 py-4">
         <div className="relative w-full sm:max-w-sm">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-2 top-3 sm:p-4.5 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search by name, email, or company..."
             value={globalFilter}
@@ -137,7 +138,7 @@ export function ClientsDataTable<TData, TValue>({
         </div>
         
         {/* Desktop Filters - Hidden on mobile */}
-        <div className="hidden md:flex items-center gap-2">
+        <div className="hidden md:flex items-center gap-3 sm:p-4">
           {table.getColumn("company") && (
             <DataTableFacetedFilter
               column={table.getColumn("company")}
@@ -156,7 +157,7 @@ export function ClientsDataTable<TData, TValue>({
             <Button
               variant="ghost"
               onClick={() => table.resetColumnFilters()}
-              className="h-8 px-2 lg:px-3"
+              className="h-8 px-3 sm:px-4 lg:px-3 sm:px-4"
             >
               Reset
               <X className="ml-2 h-4 w-4" />
@@ -164,7 +165,7 @@ export function ClientsDataTable<TData, TValue>({
           )}
         </div>
 
-        <div className="flex items-center gap-2 w-full sm:w-auto">
+        <div className="flex items-center gap-3 sm:p-4 w-full sm:w-auto">
           {/* Mobile Filter Sheet - Visible only on mobile */}
           <div className="md:hidden">
             <FilterSheet
@@ -269,7 +270,7 @@ export function ClientsDataTable<TData, TValue>({
             const client = row.original as any
             return (
               <Card key={row.id} className="overflow-hidden">
-                <CardContent className="p-4">
+                <CardContent className="p-4 sm:p-6">
                   <div className="space-y-3">
                     <div className="flex items-start justify-between">
                       <div>

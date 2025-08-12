@@ -55,6 +55,7 @@ interface DraggableHeaderProps<TData> {
   table: any
 }
 import type { Client } from "./columns"
+import { designSystem as ds } from "@/shared/lib/design-system"
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -81,7 +82,7 @@ function DraggableTableHeader<TData>({ column }: DraggableHeaderProps<TData>) {
       style={style}
       className="h-12 px-4 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0"
     >
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-3 sm:p-4">
         {isDraggable && (
           <button
             {...attributes}
@@ -235,7 +236,7 @@ export function DraggableDataTable<TData, TValue>({
       {/* Toolbar */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 py-4">
         <div className="relative w-full sm:max-w-sm">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-2 top-3 sm:p-4.5 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search by name, email, or company..."
             value={globalFilter}
@@ -248,7 +249,7 @@ export function DraggableDataTable<TData, TValue>({
         </div>
         
         {/* Desktop Filters - Hidden on mobile */}
-        <div className="hidden md:flex items-center gap-2">
+        <div className="hidden md:flex items-center gap-3 sm:p-4">
           {table.getColumn("company") && (
             <DataTableFacetedFilter
               column={table.getColumn("company")}
@@ -267,7 +268,7 @@ export function DraggableDataTable<TData, TValue>({
             <Button
               variant="ghost"
               onClick={() => table.resetColumnFilters()}
-              className="h-8 px-2 lg:px-3"
+              className="h-8 px-3 sm:px-4 lg:px-3 sm:px-4"
             >
               Reset
               <X className="ml-2 h-4 w-4" />
@@ -275,7 +276,7 @@ export function DraggableDataTable<TData, TValue>({
           )}
         </div>
 
-        <div className="flex items-center gap-2 w-full sm:w-auto">
+        <div className="flex items-center gap-3 sm:p-4 w-full sm:w-auto">
           {/* Mobile Filter Sheet - Visible only on mobile */}
           <div className="md:hidden">
             <FilterSheet
@@ -339,7 +340,7 @@ export function DraggableDataTable<TData, TValue>({
           onDragEnd={handleDragEnd}
           modifiers={[restrictToHorizontalAxis]}
         >
-          <div className="rounded-md border" style={{ maxHeight: '70vh', overflow: 'auto' }}>
+          <div className="rounded-md border overflow-x-auto" style={{ maxHeight: '70vh' }}>
             <table className="w-full caption-bottom text-sm">
               <thead className="[&_tr]:border-b">
                 {table.getHeaderGroups().map((headerGroup) => {
@@ -385,7 +386,7 @@ export function DraggableDataTable<TData, TValue>({
                             .map(columnId => row.getVisibleCells().find(cell => cell.column.id === columnId))
                             .filter(Boolean)
                             .map((cell) => cell && (
-                              <td key={cell.id} className="p-4 align-middle [&:has([role=checkbox])]:pr-0">
+                              <td key={cell.id} className="p-4 sm:p-6 align-middle [&:has([role=checkbox])]:pr-0">
                                 {flexRender(
                                   cell.column.columnDef.cell,
                                   cell.getContext()
@@ -393,7 +394,7 @@ export function DraggableDataTable<TData, TValue>({
                               </td>
                             ))
                         : row.getVisibleCells().map((cell) => (
-                            <td key={cell.id} className="p-4 align-middle [&:has([role=checkbox])]:pr-0">
+                            <td key={cell.id} className="p-4 sm:p-6 align-middle [&:has([role=checkbox])]:pr-0">
                               {flexRender(
                                 cell.column.columnDef.cell,
                                 cell.getContext()
@@ -407,7 +408,7 @@ export function DraggableDataTable<TData, TValue>({
                   <tr className="border-b transition-colors hover:bg-muted/50">
                     <td
                       colSpan={columns.length}
-                      className="h-24 text-center p-4 align-middle"
+                      className="h-24 text-center p-4 sm:p-6 align-middle"
                     >
                       No clients found.
                     </td>
@@ -426,7 +427,7 @@ export function DraggableDataTable<TData, TValue>({
             const client = row.original as Client
             return (
               <Card key={row.id} className="overflow-hidden">
-                <CardContent className="p-4">
+                <CardContent className="p-4 sm:p-6">
                   <div className="space-y-3">
                     <div className="flex items-start justify-between">
                       <div>

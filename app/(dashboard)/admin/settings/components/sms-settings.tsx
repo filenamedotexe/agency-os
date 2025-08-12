@@ -6,7 +6,7 @@ import { Input } from '@/shared/components/ui/input'
 import { Label } from '@/shared/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card'
 import { useToast } from '@/shared/hooks/use-toast'
-import { Eye, EyeOff, Phone, Shield, CheckCircle, XCircle } from 'lucide-react'
+import { Eye, EyeOff, Phone, CheckCircle, XCircle } from 'lucide-react'
 import { formatPhoneForDisplay } from '@/shared/lib/phone-utils'
 
 interface SmsSettings {
@@ -123,8 +123,8 @@ export function SmsSettings() {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+      <CardHeader className="space-y-1">
+        <CardTitle className="flex items-center gap-3 sm:p-4">
           <Phone className="h-5 w-5" />
           SMS Configuration
         </CardTitle>
@@ -134,7 +134,7 @@ export function SmsSettings() {
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-4">
-          <div className="space-y-2">
+          <div className="space-y-3">
             <Label htmlFor="phone_number">Phone Number</Label>
             <Input
               id="phone_number"
@@ -144,7 +144,7 @@ export function SmsSettings() {
             />
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-3">
             <Label htmlFor="account_sid">Twilio Account SID</Label>
             <Input
               id="account_sid"
@@ -154,7 +154,7 @@ export function SmsSettings() {
             />
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-3">
             <Label htmlFor="auth_token">Auth Token</Label>
             <div className="relative">
               <Input
@@ -168,7 +168,7 @@ export function SmsSettings() {
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="absolute right-0 top-0 h-full px-3"
+                className="absolute right-0 top-0 h-full px-3 sm:px-4"
                 onClick={() => setShowToken(!showToken)}
               >
                 {showToken ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -178,22 +178,22 @@ export function SmsSettings() {
         </div>
 
         <div className="flex items-center justify-between pt-4 border-t">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3 sm:p-4">
             {connectionStatus === 'success' && (
-              <div className="flex items-center gap-2 text-green-600">
+              <div className="flex items-center gap-3 sm:p-4 text-green-600">
                 <CheckCircle className="h-4 w-4" />
                 <span className="text-sm">Connected</span>
               </div>
             )}
             {connectionStatus === 'error' && (
-              <div className="flex items-center gap-2 text-red-600">
+              <div className="flex items-center gap-3 sm:p-4 text-red-600">
                 <XCircle className="h-4 w-4" />
                 <span className="text-sm">Connection failed</span>
               </div>
             )}
           </div>
           
-          <div className="flex gap-2">
+          <div className="flex gap-3 sm:p-4">
             <Button
               variant="outline"
               onClick={testConnection}

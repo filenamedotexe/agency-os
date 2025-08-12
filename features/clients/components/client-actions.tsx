@@ -27,6 +27,7 @@ import { useRouter } from "next/navigation"
 import { formatError, logError } from "@/shared/lib/error-handling"
 import { EditClientDialog } from "./edit-client-dialog"
 import type { Client } from "./columns"
+import { designSystem as ds } from "@/shared/lib/design-system"
 
 interface ClientActionsProps {
   client: Client
@@ -90,7 +91,7 @@ export function ClientActions({ client, onDataChange }: ClientActionsProps) {
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="h-8 w-8 p-0">
+          <Button variant="ghost" className="h-8 w-8 p-4 sm:p-6">
             <span className="sr-only">Open menu</span>
             <MoreHorizontal className="h-4 w-4" />
           </Button>

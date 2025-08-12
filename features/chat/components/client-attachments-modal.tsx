@@ -24,6 +24,7 @@ import { getClientAttachments } from '@/app/actions/chat'
 import { formatDistanceToNow } from 'date-fns'
 import { cn } from '@/shared/lib/utils'
 import { FilePreviewModal } from './file-preview-modal'
+import { designSystem as ds } from "@/shared/lib/design-system"
 
 interface ClientAttachmentsModalProps {
   open: boolean
@@ -138,7 +139,7 @@ export function ClientAttachmentsModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[85vh] w-[95vw] sm:w-full flex flex-col">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-base sm:text-lg">
+          <DialogTitle className="flex items-center gap-3 sm:p-4 text-base sm:text-lg">
             <Paperclip className="h-5 w-5 sm:h-6 sm:w-6" />
             <span className="truncate">{clientName} - Attachments ({attachments.length})</span>
           </DialogTitle>
@@ -147,7 +148,7 @@ export function ClientAttachmentsModal({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between py-2 border-b gap-3">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between py-3 sm:py-4 sm:py-4 border-b gap-3 sm:p-4">
           <Tabs value={filterType} onValueChange={(value) => setFilterType(value as any)} className="w-full sm:w-auto">
             <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
               <TabsTrigger value="all" className="text-xs sm:text-sm">
@@ -205,21 +206,21 @@ export function ClientAttachmentsModal({
               <p className="text-xs mt-1">Files will appear here once uploaded</p>
             </div>
           ) : viewMode === 'grid' ? (
-            <div className="space-y-6 p-4">
+            <div className="space-y-6 p-4 sm:p-6">
               {Object.entries(groupedAttachments).map(([date, dateAttachments]) => (
                 <div key={date}>
-                  <h4 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
+                  <h4 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-3 sm:p-4">
                     <Calendar className="h-4 w-4" />
                     {date}
                   </h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:p-4">
                     {dateAttachments.map((attachment, index) => (
                       <div
                         key={`${attachment.messageId}-${index}`}
-                        className="border rounded-lg p-3 hover:bg-muted/50 transition-colors flex flex-col h-full"
+                        className="border rounded-lg p-3 sm:p-4 hover:bg-muted/50 transition-colors flex flex-col h-full"
                       >
                         {/* Header with icon and file info */}
-                        <div className="flex items-start gap-2 mb-3">
+                        <div className="flex items-start gap-3 sm:p-4 mb-3">
                           {getFileIcon(attachment.type)}
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium truncate" title={attachment.name}>
@@ -240,19 +241,19 @@ export function ClientAttachmentsModal({
                         
                         {/* Metadata */}
                         <div className="space-y-1 mb-3 flex-1">
-                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <div className="flex items-center gap-4 text-xs text-muted-foreground">
                             <User className="h-3 w-3 flex-shrink-0" />
                             <span className="truncate">{attachment.uploadedBy.first_name} {attachment.uploadedBy.last_name}</span>
                           </div>
                           
-                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <div className="flex items-center gap-4 text-xs text-muted-foreground">
                             <Clock className="h-3 w-3 flex-shrink-0" />
                             <span className="truncate">{formatDistanceToNow(new Date(attachment.uploadedAt), { addSuffix: true })}</span>
                           </div>
                         </div>
                         
                         {/* Action buttons - always at bottom */}
-                        <div className="flex gap-2 mt-auto">
+                        <div className="flex gap-3 sm:p-4 mt-auto">
                           <Button
                             size="sm"
                             variant="outline"
@@ -279,27 +280,27 @@ export function ClientAttachmentsModal({
               ))}
             </div>
           ) : (
-            <div className="space-y-6 p-4">
+            <div className="space-y-6 p-4 sm:p-6">
               {Object.entries(groupedAttachments).map(([date, dateAttachments]) => (
                 <div key={date}>
-                  <h4 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
+                  <h4 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-3 sm:p-4">
                     <Calendar className="h-4 w-4" />
                     {date}
                   </h4>
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     {dateAttachments.map((attachment, index) => (
                       <div
                         key={`${attachment.messageId}-${index}`}
-                        className="flex items-center gap-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors"
+                        className="flex items-center gap-3 sm:p-4 p-3 sm:p-4 border rounded-lg hover:bg-muted/50 transition-colors"
                       >
                         {/* File icon and main info */}
-                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <div className="flex items-center gap-3 sm:p-4 flex-1 min-w-0">
                           <div className="flex-shrink-0">
                             {getFileIcon(attachment.type)}
                           </div>
                           
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
+                            <div className="flex items-center gap-3 sm:p-4 mb-1">
                               <p className="font-medium truncate" title={attachment.name}>
                                 {attachment.name}
                               </p>
@@ -310,11 +311,11 @@ export function ClientAttachmentsModal({
                             
                             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
                               <span className="flex-shrink-0">{formatFileSize(attachment.size)}</span>
-                              <span className="flex items-center gap-1 min-w-0">
+                              <span className="flex items-center gap-4 min-w-0">
                                 <User className="h-3 w-3 flex-shrink-0" />
                                 <span className="truncate">{attachment.uploadedBy.first_name} {attachment.uploadedBy.last_name}</span>
                               </span>
-                              <span className="flex items-center gap-1 min-w-0">
+                              <span className="flex items-center gap-4 min-w-0">
                                 <Clock className="h-3 w-3 flex-shrink-0" />
                                 <span className="truncate">{formatDistanceToNow(new Date(attachment.uploadedAt), { addSuffix: true })}</span>
                               </span>
@@ -323,13 +324,13 @@ export function ClientAttachmentsModal({
                         </div>
                         
                         {/* Action buttons */}
-                        <div className="flex gap-2 flex-shrink-0">
+                        <div className="flex gap-3 sm:p-4 flex-shrink-0">
                           <Button
                             size="sm"
                             variant="outline"
                             onClick={() => handlePreview(attachment)}
                             title="Preview file"
-                            className="px-2 sm:px-3"
+                            className="px-3 sm:px-4 sm:px-3 sm:px-4"
                           >
                             <Eye className="h-4 w-4" />
                             <span className="sr-only">Preview {attachment.name}</span>
@@ -339,7 +340,7 @@ export function ClientAttachmentsModal({
                             variant="outline"
                             onClick={() => handleDownload(attachment)}
                             title="Download file"
-                            className="px-2 sm:px-3"
+                            className="px-3 sm:px-4 sm:px-3 sm:px-4"
                           >
                             <Download className="h-4 w-4" />
                             <span className="sr-only">Download {attachment.name}</span>

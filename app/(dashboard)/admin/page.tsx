@@ -166,7 +166,7 @@ export default async function AdminDashboard() {
           <div className={`lg:col-span-3 ${ds.spacing.page.gap}`}>
             {/* Task Overview */}
             <Card>
-              <CardHeader>
+              <CardHeader className="space-y-1">
                 <div className={ds.layout.flex.between}>
                   <div>
                     <CardTitle>Task Overview</CardTitle>
@@ -176,7 +176,7 @@ export default async function AdminDashboard() {
                 </div>
               </CardHeader>
               <CardContent className={ds.spacing.section.gap}>
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <div className={`${ds.layout.flex.between} text-sm`}>
                     <span className="text-muted-foreground">Total Tasks</span>
                     <span className="font-medium">{totalTasks}</span>
@@ -191,7 +191,7 @@ export default async function AdminDashboard() {
                   </div>
                 </div>
                 
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <div className={`${ds.layout.flex.between} text-sm`}>
                     <span className="text-muted-foreground">Completion Rate</span>
                     <span className="font-medium">{completionRate}%</span>
@@ -203,7 +203,7 @@ export default async function AdminDashboard() {
 
             {/* Service Status */}
             <Card>
-              <CardHeader>
+              <CardHeader className="space-y-1">
                 <div className={ds.layout.flex.between}>
                   <div>
                     <CardTitle>Service Status</CardTitle>
@@ -214,7 +214,7 @@ export default async function AdminDashboard() {
               </CardHeader>
               <CardContent className={ds.spacing.component.gap}>
                 <div className={`${ds.layout.flex.between}`}>
-                  <div className={`${ds.layout.flex.start} gap-2`}>
+                  <div className={`${ds.layout.flex.start} gap-3 sm:p-4`}>
                     <div className="h-2 w-2 rounded-full bg-yellow-500" />
                     <span className={ds.typography.component.body}>Planning</span>
                   </div>
@@ -223,14 +223,14 @@ export default async function AdminDashboard() {
                   </span>
                 </div>
                 <div className={`${ds.layout.flex.between}`}>
-                  <div className={`${ds.layout.flex.start} gap-2`}>
+                  <div className={`${ds.layout.flex.start} gap-3 sm:p-4`}>
                     <div className="h-2 w-2 rounded-full bg-blue-500" />
                     <span className={ds.typography.component.body}>In Progress</span>
                   </div>
                   <span className="text-sm font-medium">{activeServices}</span>
                 </div>
                 <div className={`${ds.layout.flex.between}`}>
-                  <div className={`${ds.layout.flex.start} gap-2`}>
+                  <div className={`${ds.layout.flex.start} gap-3 sm:p-4`}>
                     <div className="h-2 w-2 rounded-full bg-green-500" />
                     <span className={ds.typography.component.body}>Completed</span>
                   </div>
@@ -243,7 +243,7 @@ export default async function AdminDashboard() {
 
             {/* Quick Actions */}
             <Card>
-              <CardHeader>
+              <CardHeader className="space-y-1">
                 <CardTitle>Quick Actions</CardTitle>
                 <CardDescription>Common administrative tasks</CardDescription>
               </CardHeader>

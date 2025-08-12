@@ -71,7 +71,7 @@ export default async function ProfilePage() {
         <div className="grid gap-6 md:grid-cols-2">
           {/* Profile Overview */}
           <Card>
-            <CardHeader>
+            <CardHeader className="space-y-1">
               <div className={ds.layout.flex.start}>
                 <Avatar className="h-16 w-16 mr-4">
                   <AvatarFallback className="text-lg">
@@ -79,7 +79,7 @@ export default async function ProfilePage() {
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <CardTitle className="flex items-center gap-2">
+                  <CardTitle className="flex items-center gap-3 sm:p-4">
                     {profile.first_name} {profile.last_name}
                     <Badge variant="secondary">Client</Badge>
                   </CardTitle>
@@ -114,8 +114,8 @@ export default async function ProfilePage() {
           {/* Company Information */}
           {clientProfile && (
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+              <CardHeader className="space-y-1">
+                <CardTitle className="flex items-center gap-3 sm:p-4">
                   <Building className="h-5 w-5" />
                   Company Information
                 </CardTitle>
@@ -174,8 +174,8 @@ export default async function ProfilePage() {
 
           {/* Account Security */}
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+            <CardHeader className="space-y-1">
+              <CardTitle className="flex items-center gap-3 sm:p-4">
                 <Shield className="h-5 w-5" />
                 Account Security
               </CardTitle>
@@ -216,7 +216,7 @@ export default async function ProfilePage() {
 
           {/* Contact Preferences */}
           <Card>
-            <CardHeader>
+            <CardHeader className="space-y-1">
               <CardTitle>Contact Preferences</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -256,10 +256,10 @@ export default async function ProfilePage() {
 
         {/* Help Section */}
         <Card className="mt-6">
-          <CardHeader>
+          <CardHeader className="space-y-1">
             <CardTitle>Need to Update Your Information?</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-4 sm:p-6">
             <p className={`${ds.typography.component.body} mb-4`}>
               To update your profile information, please contact your account manager or use the chat feature to reach out to our team.
             </p>

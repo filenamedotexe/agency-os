@@ -13,6 +13,7 @@ import { cn } from '@/shared/lib/utils'
 import { useIsMobile } from '@/shared/hooks/use-mobile'
 import { useToast } from '@/shared/hooks/use-toast'
 import type { MessageType } from './message-type-toggle'
+import { designSystem as ds } from "@/shared/lib/design-system"
 
 interface ChatThreadProps {
   conversationId: string
@@ -189,8 +190,8 @@ export function ChatThread({
   return (
     <div className={cn("flex flex-col h-full overflow-hidden", className)}>
       {onlineUsers.length > 0 && !isMobile && (
-        <div className="px-4 py-2 border-b">
-          <div className="flex items-center gap-2">
+        <div className="px-4 py-3 sm:py-4 sm:py-4 border-b">
+          <div className="flex items-center gap-3 sm:p-4">
             <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse" />
             <span className="text-xs text-muted-foreground">
               {onlineUsers.length} online
@@ -200,7 +201,7 @@ export function ChatThread({
       )}
       
       <div className="flex-1 overflow-y-auto" ref={scrollAreaRef}>
-        <div className="p-4 space-y-4">
+        <div className="p-4 sm:p-6 space-y-4">
           {filteredMessages.length === 0 ? (
             <div className="text-center text-muted-foreground py-8">
               No messages yet. Start the conversation!

@@ -31,7 +31,7 @@ export function StatCard({
           <CardTitle className={ds.typography.component.label}>
             {title}
           </CardTitle>
-          <div className="rounded-lg bg-muted p-2">
+          <div className="rounded-lg bg-muted p-3 sm:p-4">
             <Icon className="h-4 w-4 text-muted-foreground" />
           </div>
         </div>

@@ -225,7 +225,7 @@ export function EmailLogsTable() {
       {/* Toolbar */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 py-4">
         <div className="relative w-full sm:max-w-sm">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-2 top-3 sm:p-4.5 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search by recipient, subject, or type..."
             value={globalFilter}
@@ -234,7 +234,7 @@ export function EmailLogsTable() {
           />
         </div>
         
-        <div className="hidden md:flex items-center gap-2">
+        <div className="hidden md:flex items-center gap-3 sm:p-4">
           {table.getColumn("type") && (
             <DataTableFacetedFilter
               column={table.getColumn("type")}
@@ -253,19 +253,19 @@ export function EmailLogsTable() {
             <Button
               variant="ghost"
               onClick={() => table.resetColumnFilters()}
-              className="h-8 px-2 lg:px-3"
+              className="h-8 px-3 sm:px-4 lg:px-3 sm:px-4"
             >
               Reset
             </Button>
           )}
         </div>
 
-        <div className="flex items-center gap-2 w-full sm:w-auto ml-auto">
+        <div className="flex items-center gap-3 sm:p-4 w-full sm:w-auto ml-auto">
           <Button
             variant="outline"
             onClick={refreshLogs}
             disabled={refreshing}
-            className="gap-2"
+            className="gap-3 sm:p-4"
           >
             <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
             Refresh
@@ -363,11 +363,11 @@ export function EmailLogsTable() {
             const log = row.original
             return (
               <Card key={row.id}>
-                <CardContent className="p-4">
+                <CardContent className="p-4 sm:p-6">
                   <div className="space-y-3">
                     <div className="flex items-start justify-between">
                       <div className="space-y-1">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-3 sm:p-4">
                           <Badge variant="outline">
                             {log.type.replace('_', ' ')}
                           </Badge>

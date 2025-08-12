@@ -21,6 +21,7 @@ import {
   PopoverTrigger,
 } from "@/shared/components/ui/popover"
 import { Separator } from "@/shared/components/ui/separator"
+import { designSystem as ds } from "@/shared/lib/design-system"
 
 interface DataTableFacetedFilterProps<TData, TValue> {
   column?: Column<TData, TValue>
@@ -81,7 +82,7 @@ export function DataTableFacetedFilter<TData, TValue>({
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[200px] p-0" align="start">
+      <PopoverContent className="w-[200px] p-4 sm:p-6" align="start">
         <Command>
           <CommandInput placeholder={title} />
           <CommandList>

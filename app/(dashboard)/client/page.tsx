@@ -134,7 +134,7 @@ export default async function ClientDashboard() {
         {/* Company Info Banner - Only on desktop */}
         {profile.client_profiles && (
           <Card className="hidden lg:block">
-            <CardContent className="flex items-center justify-between p-4">
+            <CardContent className="flex items-center justify-between p-4 sm:p-6">
               <div>
                 <p className={ds.typography.component.body}>{profile.client_profiles.company_name}</p>
                 <p className={ds.typography.component.small}>{profile.client_profiles.industry}</p>
@@ -181,7 +181,7 @@ export default async function ClientDashboard() {
         <div className="lg:col-span-4 space-y-6">
           {/* Active Services */}
           <Card>
-            <CardHeader>
+            <CardHeader className="space-y-1">
               <div className={ds.layout.flex.between}>
                 <div>
                   <CardTitle>My Services</CardTitle>
@@ -190,7 +190,7 @@ export default async function ClientDashboard() {
                 <Briefcase className="h-5 w-5 text-muted-foreground" />
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-4 sm:p-6">
               <ScrollArea className="h-[400px]">
                 {!myServices || myServices.length === 0 ? (
                   <div className="text-center py-8">
@@ -226,7 +226,7 @@ export default async function ClientDashboard() {
                               </Badge>
                             </div>
                             
-                            <div className="space-y-2">
+                            <div className="space-y-3">
                               <div className="flex items-center justify-between text-xs">
                                 <span className="text-muted-foreground">Overall Progress</span>
                                 <span className="font-medium">{progress}%</span>
@@ -234,7 +234,7 @@ export default async function ClientDashboard() {
                               <Progress value={progress} className="h-2" />
                             </div>
                             
-                            <div className="grid grid-cols-2 gap-4 text-xs">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                               <div>
                                 <span className="text-muted-foreground">Milestones: </span>
                                 <span className="font-medium">
@@ -285,7 +285,7 @@ export default async function ClientDashboard() {
         <div className="lg:col-span-3 space-y-6">
           {/* Recent Updates */}
           <Card>
-            <CardHeader>
+            <CardHeader className="space-y-1">
               <div className={ds.layout.flex.between}>
                 <div>
                   <CardTitle>Recent Updates</CardTitle>
@@ -294,10 +294,10 @@ export default async function ClientDashboard() {
                 <Clock className="h-5 w-5 text-muted-foreground" />
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-4 sm:p-6">
               <div className={ds.spacing.component.gap}>
                 {recentUpdates.map((update) => (
-                  <div key={update.id} className="flex items-start gap-2">
+                  <div key={update.id} className="flex items-start gap-3 sm:p-4">
                     <div className="mt-1">
                       {update.type === "milestone" && (
                         <div className="h-2 w-2 rounded-full bg-green-500" />
@@ -323,20 +323,20 @@ export default async function ClientDashboard() {
 
           {/* Quick Links */}
           <Card>
-            <CardHeader>
+            <CardHeader className="space-y-1">
               <CardTitle>Quick Links</CardTitle>
               <CardDescription>Frequently used actions</CardDescription>
             </CardHeader>
             <CardContent className={ds.spacing.component.gap}>
-              <button className={`${ds.typography.component.body} text-left hover:text-primary transition-colors ${ds.layout.flex.start} gap-2`}>
+              <button className={`${ds.typography.component.body} text-left hover:text-primary transition-colors ${ds.layout.flex.start} gap-3 sm:p-4`}>
                 <FileText className="h-3 w-3" />
                 View Documents
               </button>
-              <button className="text-sm text-left hover:text-primary transition-colors flex items-center gap-2">
+              <button className="text-sm text-left hover:text-primary transition-colors flex items-center gap-3 sm:p-4">
                 <MessageSquare className="h-3 w-3" />
                 Send Message
               </button>
-              <button className="text-sm text-left hover:text-primary transition-colors flex items-center gap-2">
+              <button className="text-sm text-left hover:text-primary transition-colors flex items-center gap-3 sm:p-4">
                 <Calendar className="h-3 w-3" />
                 Schedule Meeting
               </button>
@@ -345,14 +345,14 @@ export default async function ClientDashboard() {
 
           {/* Support */}
           <Card>
-            <CardHeader>
+            <CardHeader className="space-y-1">
               <CardTitle className="text-sm font-medium">Need Help?</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2">
+            <CardContent className="space-y-3">
               <p className="text-xs text-muted-foreground">
                 Your dedicated team is here to help
               </p>
-              <button className="w-full bg-primary text-primary-foreground hover:bg-primary/90 text-sm py-2 px-4 rounded-md transition-colors">
+              <button className="w-full bg-primary text-primary-foreground hover:bg-primary/90 text-sm py-3 sm:py-4 sm:py-4 px-4 rounded-md transition-colors">
                 Contact Support
               </button>
             </CardContent>

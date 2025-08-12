@@ -28,7 +28,7 @@ export default async function WelcomePage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+          <div className="bg-blue-50 dark:bg-blue-900/20 p-4 sm:p-6 rounded-lg">
             <h3 className="font-medium mb-2">What&apos;s next?</h3>
             <ul className="text-sm space-y-1 text-muted-foreground">
               <li>• Log in with your email and password</li>
@@ -38,7 +38,7 @@ export default async function WelcomePage() {
             </ul>
           </div>
           
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-3 sm:p-4">
             <Link href="/login" className="w-full">
               <Button className="w-full">
                 Go to Login

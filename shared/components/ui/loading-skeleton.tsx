@@ -1,5 +1,6 @@
 import { Skeleton } from "@/shared/components/ui/skeleton"
 import { Card, CardContent, CardHeader } from "@/shared/components/ui/card"
+import { designSystem as ds } from "@/shared/lib/design-system"
 
 export function TableSkeleton() {
   return (
@@ -9,11 +10,11 @@ export function TableSkeleton() {
         <Skeleton className="h-10 w-[100px]" />
       </div>
       <div className="rounded-md border">
-        <div className="p-4 space-y-3">
+        <div className="p-4 sm:p-6 space-y-3">
           {Array.from({ length: 5 }).map((_, i) => (
             <div key={i} className="flex items-center space-x-4">
               <Skeleton className="h-12 w-12 rounded-full" />
-              <div className="space-y-2 flex-1">
+              <div className="space-y-3 flex-1">
                 <Skeleton className="h-4 w-[250px]" />
                 <Skeleton className="h-4 w-[200px]" />
               </div>
@@ -27,7 +28,7 @@ export function TableSkeleton() {
 
 export function DashboardSkeleton() {
   return (
-    <div className="space-y-4 p-4 md:p-8">
+    <div className="space-y-4 p-4 md:p-6 sm:p-8">
       <div>
         <Skeleton className="h-8 w-[200px] mb-2" />
         <Skeleton className="h-4 w-[300px]" />
@@ -40,7 +41,7 @@ export function DashboardSkeleton() {
               <Skeleton className="h-4 w-[100px]" />
               <Skeleton className="h-4 w-4 rounded" />
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-4 sm:p-6">
               <Skeleton className="h-7 w-[60px] mb-1" />
               <Skeleton className="h-3 w-[80px]" />
             </CardContent>
@@ -50,15 +51,15 @@ export function DashboardSkeleton() {
 
       <div className="grid gap-4 grid-cols-1 lg:grid-cols-7">
         <Card className="lg:col-span-4">
-          <CardHeader>
+          <CardHeader className="space-y-1">
             <Skeleton className="h-5 w-[150px]" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-4 sm:p-6">
             <div className="space-y-3">
               {Array.from({ length: 3 }).map((_, i) => (
                 <div key={i} className="flex items-center space-x-4">
                   <Skeleton className="h-10 w-10 rounded" />
-                  <div className="space-y-2 flex-1">
+                  <div className="space-y-3 flex-1">
                     <Skeleton className="h-4 w-full max-w-[200px]" />
                     <Skeleton className="h-3 w-full max-w-[150px]" />
                   </div>
@@ -69,13 +70,13 @@ export function DashboardSkeleton() {
         </Card>
 
         <Card className="lg:col-span-3">
-          <CardHeader>
+          <CardHeader className="space-y-1">
             <Skeleton className="h-5 w-[120px]" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-4 sm:p-6">
             <div className="space-y-3">
               {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="space-y-2">
+                <div key={i} className="space-y-3">
                   <Skeleton className="h-3 w-full" />
                   <Skeleton className="h-2 w-[80px]" />
                 </div>
@@ -90,10 +91,10 @@ export function DashboardSkeleton() {
 
 export function ProfileSkeleton() {
   return (
-    <div className="space-y-4 p-4 md:p-8">
+    <div className="space-y-4 p-4 md:p-6 sm:p-8">
       <div className="flex items-center space-x-4">
         <Skeleton className="h-20 w-20 rounded-full" />
-        <div className="space-y-2">
+        <div className="space-y-3">
           <Skeleton className="h-6 w-[200px]" />
           <Skeleton className="h-4 w-[150px]" />
         </div>
@@ -102,10 +103,10 @@ export function ProfileSkeleton() {
       <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
         {Array.from({ length: 4 }).map((_, i) => (
           <Card key={i}>
-            <CardHeader>
+            <CardHeader className="space-y-1">
               <Skeleton className="h-5 w-[100px]" />
             </CardHeader>
-            <CardContent className="space-y-2">
+            <CardContent className="space-y-3">
               <Skeleton className="h-4 w-full" />
               <Skeleton className="h-4 w-full" />
               <Skeleton className="h-4 w-3/4" />

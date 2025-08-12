@@ -15,6 +15,7 @@ import { Plus, User, Paperclip, Menu } from 'lucide-react'
 import { NewMessageModal } from './new-message-modal'
 import { ClientAttachmentsModal } from './client-attachments-modal'
 import { useIsMobile } from '@/shared/hooks/use-mobile'
+import { designSystem as ds } from "@/shared/lib/design-system"
 
 interface MessagesInboxProps {
   userId: string
@@ -97,7 +98,7 @@ export function MessagesInbox({ userId, userRole }: MessagesInboxProps) {
         "border-b bg-background",
         "p-4"
       )}>
-        <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center justify-between gap-3 sm:p-4">
           <h2 className="text-lg font-semibold">Messages</h2>
           <Button 
             size="sm" 
@@ -105,7 +106,7 @@ export function MessagesInbox({ userId, userRole }: MessagesInboxProps) {
               setShowNewMessageModal(true)
               if (mobile) setMobileMenuOpen(false)
             }}
-            className="gap-1"
+            className="gap-4"
           >
             <Plus className="h-4 w-4" />
             <span className="hidden sm:inline">New</span>
@@ -115,15 +116,15 @@ export function MessagesInbox({ userId, userRole }: MessagesInboxProps) {
       
       <ScrollArea className="flex-1">
         {loading ? (
-          <div className="text-center text-muted-foreground p-8">
+          <div className="text-center text-muted-foreground p-6 sm:p-8">
             Loading conversations...
           </div>
         ) : conversations.length === 0 ? (
-          <div className="text-center text-muted-foreground p-8">
+          <div className="text-center text-muted-foreground p-6 sm:p-8">
             No conversations yet
           </div>
         ) : (
-          <div className="p-2 space-y-1">
+          <div className="p-3 sm:p-4 space-y-1">
             {conversations.map((conversation) => {
               const client = conversation.client
               const hasUnread = conversation.unread_count > 0
@@ -133,14 +134,14 @@ export function MessagesInbox({ userId, userRole }: MessagesInboxProps) {
                 <div
                   key={conversation.id}
                   className={cn(
-                    "w-full p-3 rounded-lg transition-colors cursor-pointer relative",
+                    "w-full p-3 sm:p-4 rounded-lg transition-colors cursor-pointer relative",
                     "hover:bg-accent",
                     selectedConversationId === conversation.id && "bg-accent",
                     hasUnread && "font-medium"
                   )}
                   onClick={() => handleSelectConversation(conversation.id)}
                 >
-                  <div className="flex items-start gap-3">
+                  <div className="flex items-start gap-3 sm:p-4">
                     <Avatar className="h-10 w-10 flex-shrink-0">
                       <AvatarFallback>
                         {client?.first_name?.[0] || client?.email[0].toUpperCase()}
@@ -148,13 +149,13 @@ export function MessagesInbox({ userId, userRole }: MessagesInboxProps) {
                     </Avatar>
                     
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2 mb-1">
+                      <div className="flex items-start justify-between gap-3 sm:p-4 mb-1">
                         <span className="truncate block text-sm font-medium">
                           {client?.client_profiles?.company_name || 
                            `${client?.first_name} ${client?.last_name}` ||
                            client?.email}
                         </span>
-                        <div className="flex items-center gap-1 flex-shrink-0">
+                        <div className="flex items-center gap-4 flex-shrink-0">
                           {hasUnread && (
                             <Badge variant="destructive" className="text-xs px-1.5 h-5">
                               {conversation.unread_count}
@@ -169,7 +170,7 @@ export function MessagesInbox({ userId, userRole }: MessagesInboxProps) {
                               <div className="relative">
                                 <Paperclip className="h-4 w-4" />
                                 {conversation.attachment_count > 0 && (
-                                  <Badge className="absolute -top-2 -right-2 h-4 w-4 p-0 text-[10px] bg-blue-500 hover:bg-blue-600 flex items-center justify-center">
+                                  <Badge className="absolute -top-3 sm:p-4 -right-2 h-4 w-4 p-0 text-[10px] bg-blue-500 hover:bg-blue-600 flex items-center justify-center">
                                     {conversation.attachment_count > 9 ? '9+' : conversation.attachment_count}
                                   </Badge>
                                 )}
@@ -221,7 +222,7 @@ export function MessagesInbox({ userId, userRole }: MessagesInboxProps) {
       {/* Mobile Conversation List (Sheet) - Only on mobile */}
       {isMobile && (
         <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-          <SheetContent side="left" className="p-0 w-[85vw] max-w-[400px] flex flex-col">
+          <SheetContent side="left" className="p-4 sm:p-6 w-[85vw] max-w-[400px] flex flex-col">
             <SheetHeader className="sr-only">
               <SheetTitle>Conversations</SheetTitle>
             </SheetHeader>
@@ -236,7 +237,7 @@ export function MessagesInbox({ userId, userRole }: MessagesInboxProps) {
           <>
             {/* Chat header with mobile menu button */}
             <div className="border-b bg-background">
-              <div className="flex items-center gap-2 p-4">
+              <div className="flex items-center gap-3 sm:p-4 p-4">
                 {/* Mobile menu button - only on mobile */}
                 {isMobile && (
                   <Button
@@ -260,7 +261,7 @@ export function MessagesInbox({ userId, userRole }: MessagesInboxProps) {
                       {selectedConversation.client?.email}
                     </p>
                   </div>
-                  <div className="flex items-center gap-2 flex-shrink-0">
+                  <div className="flex items-center gap-3 sm:p-4 flex-shrink-0">
                     {selectedConversation.attachment_count > 0 && (
                       <Button
                         variant="outline"
@@ -273,7 +274,7 @@ export function MessagesInbox({ userId, userRole }: MessagesInboxProps) {
                           setSelectedClientForAttachments({ id: client.id, name: clientName })
                           setShowAttachmentsModal(true)
                         }}
-                        className="gap-1"
+                        className="gap-4"
                       >
                         <Paperclip className="h-4 w-4" />
                         <span className="hidden sm:inline">Files</span>
@@ -300,7 +301,7 @@ export function MessagesInbox({ userId, userRole }: MessagesInboxProps) {
           <div className="h-full flex flex-col">
             {/* Empty state header with mobile menu button */}
             {isMobile && (
-              <div className="border-b bg-background p-4">
+              <div className="border-b bg-background p-4 sm:p-6">
                 <Button
                   variant="ghost"
                   size="icon"
@@ -312,7 +313,7 @@ export function MessagesInbox({ userId, userRole }: MessagesInboxProps) {
               </div>
             )}
             
-            <div className="flex-1 flex items-center justify-center text-muted-foreground p-4">
+            <div className="flex-1 flex items-center justify-center text-muted-foreground p-4 sm:p-6">
               <div className="text-center">
                 <p className="text-lg mb-2">No conversation selected</p>
                 <p className="text-sm">

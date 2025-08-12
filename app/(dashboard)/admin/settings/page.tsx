@@ -91,7 +91,7 @@ export default async function AdminSettingsPage() {
                   Configure general system settings
                 </p>
               </div>
-              <div className="rounded-lg border p-6">
+              <div className="rounded-lg border p-4 sm:p-6">
                 <p className="text-sm text-muted-foreground">
                   General settings will be added here in future updates.
                 </p>
@@ -107,7 +107,7 @@ export default async function AdminSettingsPage() {
                   Manage user accounts and permissions
                 </p>
               </div>
-              <div className="rounded-lg border p-6">
+              <div className="rounded-lg border p-4 sm:p-6">
                 <p className="text-sm text-muted-foreground">
                   User management features will be added here in future updates.
                 </p>

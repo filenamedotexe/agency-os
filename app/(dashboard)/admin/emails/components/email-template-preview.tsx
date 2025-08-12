@@ -125,11 +125,11 @@ export function EmailTemplatePreview() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {[1, 2, 3].map((i) => (
             <Card key={i}>
-              <CardHeader>
+              <CardHeader className="space-y-1">
                 <Skeleton className="h-4 w-24" />
                 <Skeleton className="h-3 w-32 mt-2" />
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-4 sm:p-6">
                 <Skeleton className="h-16 w-full" />
               </CardContent>
             </Card>
@@ -182,13 +182,13 @@ export function EmailTemplatePreview() {
             >
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-3 sm:p-4">
                     <Icon className="h-5 w-5 text-muted-foreground" />
                     <div className="flex-1">
                       <CardTitle className="text-sm font-medium">
                         {template.name}
                       </CardTitle>
-                      <div className="flex items-center gap-2 mt-1">
+                      <div className="flex items-center gap-3 sm:p-4 mt-1">
                         <Badge 
                           variant={template.is_active ? "default" : "secondary"}
                           className="text-xs"
@@ -226,10 +226,10 @@ export function EmailTemplatePreview() {
       {/* Template Preview */}
       {currentTemplate && (
         <Card>
-          <CardHeader>
+          <CardHeader className="space-y-1">
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle className="flex items-center gap-3 sm:p-4">
                   {React.createElement(getIcon(currentTemplate.trigger_event), { className: "h-5 w-5" })}
                   {currentTemplate.name}
                 </CardTitle>
@@ -242,18 +242,18 @@ export function EmailTemplatePreview() {
               </Badge>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-4 sm:p-6">
             <Tabs defaultValue="preview" className="w-full">
               <TabsList>
-                <TabsTrigger value="preview" className="gap-2">
+                <TabsTrigger value="preview" className="gap-3 sm:p-4">
                   <Eye className="h-4 w-4" />
                   Preview
                 </TabsTrigger>
-                <TabsTrigger value="variables" className="gap-2">
+                <TabsTrigger value="variables" className="gap-3 sm:p-4">
                   <Code className="h-4 w-4" />
                   Variables
                 </TabsTrigger>
-                <TabsTrigger value="subject" className="gap-2">
+                <TabsTrigger value="subject" className="gap-3 sm:p-4">
                   <Mail className="h-4 w-4" />
                   Subject
                 </TabsTrigger>
@@ -273,16 +273,16 @@ export function EmailTemplatePreview() {
               
               <TabsContent value="variables" className="mt-4">
                 <Card>
-                  <CardHeader>
+                  <CardHeader className="space-y-1">
                     <CardTitle className="text-sm">Template Variables</CardTitle>
                     <CardDescription>
                       These variables are replaced with actual data when the email is sent
                     </CardDescription>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="p-4 sm:p-6">
                     <div className="space-y-3">
                       {currentTemplate.variables.map((variable, index) => (
-                        <div key={index} className="flex items-start gap-3 p-3 bg-muted rounded-lg">
+                        <div key={index} className="flex items-start gap-3 sm:p-4 p-3 sm:p-4 bg-muted rounded-lg">
                           <code className="text-sm font-mono text-primary">
                             {`{{${variable.key}}}`}
                           </code>
@@ -298,19 +298,19 @@ export function EmailTemplatePreview() {
 
               <TabsContent value="subject" className="mt-4">
                 <Card>
-                  <CardHeader>
+                  <CardHeader className="space-y-1">
                     <CardTitle className="text-sm">Email Subject</CardTitle>
                     <CardDescription>
                       The subject line with variables
                     </CardDescription>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="p-4 sm:p-6">
                     <div className="space-y-4">
-                      <div className="p-3 bg-muted rounded-lg">
+                      <div className="p-3 sm:p-4 bg-muted rounded-lg">
                         <p className="text-sm font-medium mb-1">Template:</p>
                         <code className="text-sm font-mono">{currentTemplate.subject}</code>
                       </div>
-                      <div className="p-3 bg-muted rounded-lg">
+                      <div className="p-3 sm:p-4 bg-muted rounded-lg">
                         <p className="text-sm font-medium mb-1">Preview:</p>
                         <p className="text-sm">
                           {currentTemplate.subject.replace(/{{(\w+)}}/g, (match, key) => {
@@ -334,24 +334,24 @@ export function EmailTemplatePreview() {
 
       {/* Template Info */}
       <Card>
-        <CardHeader>
+        <CardHeader className="space-y-1">
           <CardTitle className="text-sm font-medium">Template Information</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-2">
+        <CardContent className="space-y-3">
           <div className="text-sm space-y-1">
-            <p className="text-muted-foreground flex items-center gap-2">
+            <p className="text-muted-foreground flex items-center gap-3 sm:p-4">
               <CheckCircle className="h-4 w-4 text-green-500" />
               Templates are stored in the database and can be edited
             </p>
-            <p className="text-muted-foreground flex items-center gap-2">
+            <p className="text-muted-foreground flex items-center gap-3 sm:p-4">
               <CheckCircle className="h-4 w-4 text-green-500" />
               Variables are automatically replaced with actual data
             </p>
-            <p className="text-muted-foreground flex items-center gap-2">
+            <p className="text-muted-foreground flex items-center gap-3 sm:p-4">
               <CheckCircle className="h-4 w-4 text-green-500" />
               Active/Inactive status controls whether emails are sent
             </p>
-            <p className="text-muted-foreground flex items-center gap-2">
+            <p className="text-muted-foreground flex items-center gap-3 sm:p-4">
               <CheckCircle className="h-4 w-4 text-green-500" />
               All email sends are logged in the database
             </p>

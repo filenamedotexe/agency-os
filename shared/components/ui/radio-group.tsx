@@ -5,6 +5,7 @@ import * as RadioGroupPrimitive from "@radix-ui/react-radio-group"
 import { Circle } from "lucide-react"
 
 import { cn } from "@/shared/lib/utils"
+import { designSystem as ds } from "@/shared/lib/design-system"
 
 const RadioGroup = React.forwardRef<
   React.ElementRef<typeof RadioGroupPrimitive.Root>,
@@ -12,7 +13,7 @@ const RadioGroup = React.forwardRef<
 >(({ className, ...props }, ref) => {
   return (
     <RadioGroupPrimitive.Root
-      className={cn("grid gap-2", className)}
+      className={cn("grid gap-3 sm:p-4", className)}
       {...props}
       ref={ref}
     />

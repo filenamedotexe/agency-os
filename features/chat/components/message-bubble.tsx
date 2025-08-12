@@ -4,6 +4,7 @@ import { cn } from '@/shared/lib/utils'
 import { Avatar, AvatarFallback } from '@/shared/components/ui/avatar'
 import { format } from 'date-fns'
 import { FileIcon, Download, Phone, Mail, MessageCircle } from 'lucide-react'
+import { designSystem as ds } from "@/shared/lib/design-system"
 
 interface MessageBubbleProps {
   message: {
@@ -70,7 +71,7 @@ export function MessageBubble({ message, isOwn }: MessageBubbleProps) {
   if (isSystem) {
     return (
       <div className="flex justify-center my-4">
-        <div className="bg-muted px-4 py-2 rounded-full text-sm text-muted-foreground">
+        <div className="bg-muted px-4 py-3 sm:py-4 sm:py-4 rounded-full text-sm text-muted-foreground">
           {message.content}
         </div>
       </div>
@@ -79,7 +80,7 @@ export function MessageBubble({ message, isOwn }: MessageBubbleProps) {
   
   return (
     <div className={cn(
-      "flex gap-3 mb-4",
+      "flex gap-3 sm:p-4 mb-4",
       isOwn && "flex-row-reverse"
     )}>
       <Avatar className="h-8 w-8 flex-shrink-0">
@@ -94,11 +95,11 @@ export function MessageBubble({ message, isOwn }: MessageBubbleProps) {
         "flex flex-col gap-1 max-w-[85%] sm:max-w-[75%] md:max-w-[70%]",
         isOwn && "items-end"
       )}>
-        <div className="flex items-baseline gap-2">
+        <div className="flex items-baseline gap-3 sm:p-4">
           <span className="text-xs font-medium">
             {getSenderName()}
           </span>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-4">
             <span className="text-xs text-muted-foreground">
               {format(new Date(message.created_at), 'h:mm a')}
             </span>
@@ -111,7 +112,7 @@ export function MessageBubble({ message, isOwn }: MessageBubbleProps) {
         </div>
         
         <div className={cn(
-          "rounded-lg px-3 py-2",
+          "rounded-lg px-3 sm:px-4 py-3 sm:py-4 sm:py-4",
           isOwn 
             ? "bg-primary text-primary-foreground" 
             : "bg-muted"
@@ -120,7 +121,7 @@ export function MessageBubble({ message, isOwn }: MessageBubbleProps) {
         </div>
         
         {message.attachments && message.attachments.length > 0 && (
-          <div className="flex flex-col gap-1 mt-1">
+          <div className="flex flex-col gap-4 mt-1">
             {message.attachments.map((attachment, index) => (
               <a
                 key={index}
@@ -128,7 +129,7 @@ export function MessageBubble({ message, isOwn }: MessageBubbleProps) {
                 target="_blank"
                 rel="noopener noreferrer"
                 className={cn(
-                  "flex items-center gap-2 px-2 py-2 sm:px-3 rounded-lg text-sm hover:opacity-80 transition-opacity",
+                  "flex items-center gap-3 sm:p-4 px-3 sm:px-4 py-3 sm:py-4 sm:py-4 sm:px-3 sm:px-4 rounded-lg text-sm hover:opacity-80 transition-opacity",
                   isOwn 
                     ? "bg-primary/90 text-primary-foreground" 
                     : "bg-muted"

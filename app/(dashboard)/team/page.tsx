@@ -97,7 +97,7 @@ export default async function TeamDashboard() {
           <div className="lg:col-span-4 space-y-6">
             {/* Upcoming Tasks */}
             <Card>
-              <CardHeader>
+              <CardHeader className="space-y-1">
                 <div className={ds.layout.flex.between}>
                   <div>
                     <CardTitle>Upcoming Tasks</CardTitle>
@@ -106,7 +106,7 @@ export default async function TeamDashboard() {
                   <Calendar className="h-5 w-5 text-muted-foreground" />
                 </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-4 sm:p-6">
                 {todoTasks === 0 ? (
                   <p className={ds.typography.component.subtitle}>
                     No upcoming tasks. Great job staying on top of your work!
@@ -117,7 +117,7 @@ export default async function TeamDashboard() {
                       ?.filter(t => t.status === "todo")
                       .slice(0, 5)
                       .map((task) => (
-                        <div key={task.id} className="flex items-center justify-between py-2 border-b last:border-0">
+                        <div key={task.id} className="flex items-center justify-between py-3 sm:py-4 sm:py-4 border-b last:border-0">
                           <div>
                             <p className={ds.typography.component.body}>{task.title}</p>
                             <p className={ds.typography.component.small}>
@@ -134,7 +134,7 @@ export default async function TeamDashboard() {
 
             {/* Active Tasks */}
             <Card>
-              <CardHeader>
+              <CardHeader className="space-y-1">
                 <div className={ds.layout.flex.between}>
                   <div>
                     <CardTitle>Active Tasks</CardTitle>
@@ -143,7 +143,7 @@ export default async function TeamDashboard() {
                   <Target className="h-5 w-5 text-muted-foreground" />
                 </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-4 sm:p-6">
                 {inProgressTasks === 0 ? (
                   <p className={ds.typography.component.subtitle}>
                     No tasks in progress. Pick a task to start working on.
@@ -154,7 +154,7 @@ export default async function TeamDashboard() {
                       ?.filter(t => t.status === "in_progress")
                       .slice(0, 5)
                       .map((task) => (
-                        <div key={task.id} className="flex items-center justify-between py-2 border-b last:border-0">
+                        <div key={task.id} className="flex items-center justify-between py-3 sm:py-4 sm:py-4 border-b last:border-0">
                           <div>
                             <p className={ds.typography.component.body}>{task.title}</p>
                             {task.estimated_hours && (
@@ -176,12 +176,12 @@ export default async function TeamDashboard() {
           <div className="lg:col-span-3 space-y-6">
             {/* Task Progress */}
             <Card>
-              <CardHeader>
+              <CardHeader className="space-y-1">
                 <CardTitle>Task Progress</CardTitle>
                 <CardDescription>Overall completion</CardDescription>
               </CardHeader>
               <CardContent className={ds.spacing.section.gap}>
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <div className={`${ds.layout.flex.between} text-sm`}>
                     <span className="text-muted-foreground">Completion Rate</span>
                     <span className="font-medium">{completionRate}%</span>
@@ -189,7 +189,7 @@ export default async function TeamDashboard() {
                   <Progress value={completionRate} className="h-2" />
                 </div>
                 
-                <div className="space-y-2 pt-4">
+                <div className="space-y-3 pt-4">
                   <div className={`${ds.layout.flex.between} text-sm`}>
                     <span className="text-muted-foreground">Completed</span>
                     <Badge variant="secondary">{completedTasks}</Badge>
@@ -214,13 +214,13 @@ export default async function TeamDashboard() {
 
             {/* Priority Distribution */}
             <Card>
-              <CardHeader>
+              <CardHeader className="space-y-1">
                 <CardTitle>Priority Distribution</CardTitle>
                 <CardDescription>Task priorities</CardDescription>
               </CardHeader>
               <CardContent className={ds.spacing.component.gap}>
                 <div className={`${ds.layout.flex.between}`}>
-                  <div className={`${ds.layout.flex.start} gap-2`}>
+                  <div className={`${ds.layout.flex.start} gap-3 sm:p-4`}>
                     <div className="h-2 w-2 rounded-full bg-red-500" />
                     <span className={ds.typography.component.body}>High</span>
                   </div>
@@ -229,7 +229,7 @@ export default async function TeamDashboard() {
                   </span>
                 </div>
                 <div className={`${ds.layout.flex.between}`}>
-                  <div className={`${ds.layout.flex.start} gap-2`}>
+                  <div className={`${ds.layout.flex.start} gap-3 sm:p-4`}>
                     <div className="h-2 w-2 rounded-full bg-yellow-500" />
                     <span className={ds.typography.component.body}>Medium</span>
                   </div>
@@ -238,7 +238,7 @@ export default async function TeamDashboard() {
                   </span>
                 </div>
                 <div className={`${ds.layout.flex.between}`}>
-                  <div className={`${ds.layout.flex.start} gap-2`}>
+                  <div className={`${ds.layout.flex.start} gap-3 sm:p-4`}>
                     <div className="h-2 w-2 rounded-full bg-green-500" />
                     <span className={ds.typography.component.body}>Low</span>
                   </div>

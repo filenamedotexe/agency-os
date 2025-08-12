@@ -1,6 +1,7 @@
 "use client"
 
 import { useToast } from "@/shared/hooks/use-toast"
+import { designSystem as ds } from "@/shared/lib/design-system"
 import {
   Toast,
   ToastClose,

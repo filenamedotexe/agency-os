@@ -10,6 +10,7 @@ import { createClient } from '@/shared/lib/supabase/client'
 import { v4 as uuidv4 } from 'uuid'
 import { useToast } from '@/shared/hooks/use-toast'
 import { MessageTypeToggle, type MessageType } from './message-type-toggle'
+import { designSystem as ds } from "@/shared/lib/design-system"
 
 interface ChatInputProps {
   onSendMessage: (content: string, attachments: any[], messageType: MessageType) => void
@@ -209,7 +210,7 @@ export function ChatInput({
     <div className="w-full">
       {/* Message Type Toggle - Only for admin/team */}
       {userRole !== 'client' && (
-        <div className="flex items-center justify-between p-3 pb-2 border-b bg-muted/30">
+        <div className="flex items-center justify-between p-3 sm:p-4 pb-2 border-b bg-muted/30">
           <MessageTypeToggle
             value={messageType}
             onChange={setMessageType}
@@ -238,17 +239,17 @@ export function ChatInput({
 
       {/* Over limit warning - Only for admin/team */}
       {userRole !== 'client' && isOverSmsLimit && (
-        <div className="text-xs text-amber-600 bg-amber-50 p-2 border-b">
+        <div className="text-xs text-amber-600 bg-amber-50 p-3 sm:p-4 border-b">
           Message will be truncated to {SMS_LIMIT} characters with a "See full message" link.
         </div>
       )}
       
       {attachments.length > 0 && (
-        <div className="flex gap-1 sm:gap-2 p-2 border-b flex-wrap bg-muted/30">
+        <div className="flex gap-1 sm:gap-3 sm:p-4 p-3 sm:p-4 border-b flex-wrap bg-muted/30">
           {attachments.map((attachment, index) => (
             <div
               key={index}
-              className="flex items-center gap-1 px-2 py-1 bg-background border rounded-md text-xs"
+              className="flex items-center gap-1 px-3 sm:px-4 py-1 bg-background border rounded-md text-xs"
             >
               <Paperclip className="h-3 w-3 flex-shrink-0" />
               <span className="max-w-[80px] sm:max-w-[120px] md:max-w-[150px] truncate">{attachment.name}</span>
@@ -265,7 +266,7 @@ export function ChatInput({
       )}
       
       <div {...getRootProps()} className={cn(
-        "flex gap-2 p-3 sm:p-4 relative",
+        "flex gap-3 sm:p-4 p-3 sm:p-4 relative",
         isDragActive && "bg-muted/50"
       )}>
         <input {...getInputProps()} />
