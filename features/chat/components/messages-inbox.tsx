@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { getUserConversations } from '@/app/actions/chat'
 import { ChatThread } from './chat-thread'
 import { cn } from '@/shared/lib/utils'
@@ -21,6 +22,7 @@ interface MessagesInboxProps {
 }
 
 export function MessagesInbox({ userId, userRole }: MessagesInboxProps) {
+  const searchParams = useSearchParams()
   const [conversations, setConversations] = useState<any[]>([])
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -34,7 +36,15 @@ export function MessagesInbox({ userId, userRole }: MessagesInboxProps) {
   const loadConversations = async () => {
     const { conversations: data } = await getUserConversations()
     setConversations(data)
-    if (data.length > 0 && !selectedConversationId) {
+    
+    // Check if there's a conversation ID in URL params
+    const urlConversationId = searchParams.get('conversation')
+    
+    if (urlConversationId && data.some(c => c.id === urlConversationId)) {
+      // If URL has valid conversation ID, select it
+      setSelectedConversationId(urlConversationId)
+    } else if (data.length > 0 && !selectedConversationId) {
+      // Otherwise select first conversation if none selected
       setSelectedConversationId(data[0].id)
     }
     setLoading(false)
@@ -46,7 +56,7 @@ export function MessagesInbox({ userId, userRole }: MessagesInboxProps) {
     // Refresh every 30 seconds
     const interval = setInterval(loadConversations, 30000)
     return () => clearInterval(interval)
-  }, [selectedConversationId])
+  }, [searchParams])
   
   const selectedConversation = conversations.find(c => c.id === selectedConversationId)
 

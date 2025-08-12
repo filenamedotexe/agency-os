@@ -32,13 +32,21 @@ export function MessageClientButton({ clientId, clientName }: MessageClientButto
         return
       }
       
-      // Redirect to messages page - it should show the conversation
-      router.push('/messages')
-      
-      toast({
-        title: "Success", 
-        description: `Opening conversation with ${clientName}`
-      })
+      // Redirect to messages page with conversation ID as query param
+      if (result.conversation) {
+        router.push(`/messages?conversation=${result.conversation.id}`)
+        
+        toast({
+          title: "Success", 
+          description: `Opening conversation with ${clientName}`
+        })
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to create conversation",
+          variant: "destructive"
+        })
+      }
       
     } catch (error) {
       toast({
