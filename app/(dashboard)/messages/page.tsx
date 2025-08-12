@@ -21,7 +21,7 @@ export default async function MessagesPage() {
   
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
-      <MessagesInbox userId={user.id} />
+      <MessagesInbox userId={user.id} userRole={profile?.role || 'team'} />
     </div>
   )
 }

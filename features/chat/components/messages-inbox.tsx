@@ -17,9 +17,10 @@ import { useIsMobile } from '@/shared/hooks/use-mobile'
 
 interface MessagesInboxProps {
   userId: string
+  userRole?: string
 }
 
-export function MessagesInbox({ userId }: MessagesInboxProps) {
+export function MessagesInbox({ userId, userRole }: MessagesInboxProps) {
   const [conversations, setConversations] = useState<any[]>([])
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -280,6 +281,7 @@ export function MessagesInbox({ userId }: MessagesInboxProps) {
             <ChatThread
               conversationId={selectedConversationId!}
               currentUserId={userId}
+              userRole={userRole}
               showSystemMessages={true}
               className="flex-1 overflow-hidden"
             />

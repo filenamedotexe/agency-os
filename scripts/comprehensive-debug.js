@@ -10,7 +10,7 @@ const { chromium } = require('playwright');
 console.log('🔬 Comprehensive Message System Debug');
 console.log('=====================================\n');
 
-const TEST_URL = 'http://localhost:3005';
+const TEST_URL = 'http://localhost:3000';
 const TEST_USERS = {
   admin: { email: 'admin@demo.com', password: 'password123', role: 'admin' },
   team: { email: 'team@demo.com', password: 'password123', role: 'team_member' },

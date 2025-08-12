@@ -4,6 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui
 import { EmailLogsTable } from "../emails/components/email-logs-table"
 import { EmailTemplatePreview } from "../emails/components/email-template-preview"
 import { TestEmailForm } from "../emails/components/test-email-form"
+import { SmsSettings } from "./components/sms-settings"
 import { PageLayout, PageHeader, PageContent } from "@/shared/components/layout/page-layout"
 
 export default async function AdminSettingsPage() {
@@ -34,6 +35,7 @@ export default async function AdminSettingsPage() {
         <Tabs defaultValue="emails" className="w-full">
           <TabsList>
             <TabsTrigger value="emails">Email Management</TabsTrigger>
+            <TabsTrigger value="sms">SMS Configuration</TabsTrigger>
             <TabsTrigger value="general">General Settings</TabsTrigger>
             <TabsTrigger value="users">User Management</TabsTrigger>
           </TabsList>
@@ -66,6 +68,18 @@ export default async function AdminSettingsPage() {
                   <TestEmailForm />
                 </TabsContent>
               </Tabs>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="sms" className="mt-6">
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-lg font-medium">SMS Configuration</h3>
+                <p className="text-sm text-muted-foreground">
+                  Configure Twilio integration for SMS messaging
+                </p>
+              </div>
+              <SmsSettings />
             </div>
           </TabsContent>
           

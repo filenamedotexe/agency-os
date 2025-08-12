@@ -3,7 +3,7 @@
 import { cn } from '@/shared/lib/utils'
 import { Avatar, AvatarFallback } from '@/shared/components/ui/avatar'
 import { format } from 'date-fns'
-import { FileIcon, Download } from 'lucide-react'
+import { FileIcon, Download, Phone, Mail, MessageCircle } from 'lucide-react'
 
 interface MessageBubbleProps {
   message: {
@@ -11,6 +11,8 @@ interface MessageBubbleProps {
     type: 'user' | 'system'
     content: string
     created_at: string
+    source_type?: 'chat' | 'sms' | 'email'
+    source_metadata?: Record<string, any>
     sender?: {
       id: string
       first_name?: string
@@ -54,6 +56,17 @@ export function MessageBubble({ message, isOwn }: MessageBubbleProps) {
     return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
   }
   
+  const getSourceIcon = (sourceType?: string) => {
+    switch (sourceType) {
+      case 'sms':
+        return <Phone className="h-3 w-3" />
+      case 'email':
+        return <Mail className="h-3 w-3" />
+      default:
+        return <MessageCircle className="h-3 w-3" />
+    }
+  }
+  
   if (isSystem) {
     return (
       <div className="flex justify-center my-4">
@@ -85,9 +98,16 @@ export function MessageBubble({ message, isOwn }: MessageBubbleProps) {
           <span className="text-xs font-medium">
             {getSenderName()}
           </span>
-          <span className="text-xs text-muted-foreground">
-            {format(new Date(message.created_at), 'h:mm a')}
-          </span>
+          <div className="flex items-center gap-1">
+            <span className="text-xs text-muted-foreground">
+              {format(new Date(message.created_at), 'h:mm a')}
+            </span>
+            {message.source_type && message.source_type !== 'chat' && (
+              <div className="text-muted-foreground" title={`Sent via ${message.source_type}`}>
+                {getSourceIcon(message.source_type)}
+              </div>
+            )}
+          </div>
         </div>
         
         <div className={cn(

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Button } from '@/shared/components/ui/button'
 import { Textarea } from '@/shared/components/ui/textarea'
 import { Send, Paperclip, X, Loader2 } from 'lucide-react'
@@ -9,13 +9,16 @@ import { cn } from '@/shared/lib/utils'
 import { createClient } from '@/shared/lib/supabase/client'
 import { v4 as uuidv4 } from 'uuid'
 import { useToast } from '@/shared/hooks/use-toast'
+import { MessageTypeToggle, type MessageType } from './message-type-toggle'
 
 interface ChatInputProps {
-  onSendMessage: (content: string, attachments: any[]) => void
+  onSendMessage: (content: string, attachments: any[], messageType: MessageType) => void
   disabled?: boolean
   placeholder?: string
   conversationId?: string
   currentUserId: string
+  userRole?: string
+  lastMessageSourceType?: MessageType
 }
 
 export function ChatInput({ 
@@ -23,13 +26,28 @@ export function ChatInput({
   disabled, 
   placeholder,
   conversationId = 'temp-conversation-id',
-  currentUserId
+  currentUserId,
+  userRole,
+  lastMessageSourceType
 }: ChatInputProps) {
   const [message, setMessage] = useState('')
   const [attachments, setAttachments] = useState<any[]>([])
   const [uploading, setUploading] = useState(false)
+  const [messageType, setMessageType] = useState<MessageType>('chat')
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const { toast } = useToast()
+  
+  // Auto-set message type based on last message source (only for admin/team)
+  useEffect(() => {
+    if (userRole !== 'client' && lastMessageSourceType && lastMessageSourceType !== 'chat') {
+      setMessageType(lastMessageSourceType)
+    }
+  }, [lastMessageSourceType, userRole])
+
+  // Character counter for SMS
+  const SMS_LIMIT = 160
+  const isOverSmsLimit = messageType === 'sms' && message.length > SMS_LIMIT
+  const charsRemaining = SMS_LIMIT - message.length
   
   // Upload file directly from client
   const uploadFile = async (file: File) => {
@@ -137,7 +155,7 @@ export function ChatInput({
   
   const handleSend = () => {
     if (message.trim() || attachments.length > 0) {
-      onSendMessage(message.trim(), attachments)
+      onSendMessage(message.trim(), attachments, messageType)
       setMessage('')
       setAttachments([])
       textareaRef.current?.focus()
@@ -189,6 +207,42 @@ export function ChatInput({
   
   return (
     <div className="w-full">
+      {/* Message Type Toggle - Only for admin/team */}
+      {userRole !== 'client' && (
+        <div className="flex items-center justify-between p-3 pb-2 border-b bg-muted/30">
+          <MessageTypeToggle
+            value={messageType}
+            onChange={setMessageType}
+            disabled={disabled}
+          />
+          
+          {/* SMS Character Counter */}
+          {messageType === 'sms' && (
+            <div className={cn(
+              "text-xs",
+              isOverSmsLimit ? "text-red-500" : "text-muted-foreground"
+            )}>
+              {isOverSmsLimit ? (
+                <>
+                  <span className="font-medium">{Math.abs(charsRemaining)}</span> over limit
+                </>
+              ) : (
+                <>
+                  <span className="font-medium">{charsRemaining}</span> remaining
+                </>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Over limit warning - Only for admin/team */}
+      {userRole !== 'client' && isOverSmsLimit && (
+        <div className="text-xs text-amber-600 bg-amber-50 p-2 border-b">
+          Message will be truncated to {SMS_LIMIT} characters with a "See full message" link.
+        </div>
+      )}
+      
       {attachments.length > 0 && (
         <div className="flex gap-1 sm:gap-2 p-2 border-b flex-wrap bg-muted/30">
           {attachments.map((attachment, index) => (

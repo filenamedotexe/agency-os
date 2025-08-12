@@ -79,11 +79,15 @@ export async function getOrCreateConversation(clientId: string) {
 export async function sendMessage({
   conversationId,
   content,
-  attachments = []
+  attachments = [],
+  sourceType = 'chat',
+  sourceMetadata = {}
 }: {
   conversationId: string
   content: string
   attachments?: Array<{ name: string; url: string; size: number; type: string }>
+  sourceType?: 'chat' | 'sms' | 'email'
+  sourceMetadata?: Record<string, unknown>
 }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -98,7 +102,9 @@ export async function sendMessage({
       sender_id: user.id,
       type: 'user',
       content,
-      attachments
+      attachments,
+      source_type: sourceType,
+      source_metadata: sourceMetadata
     })
     .select(`
       *,

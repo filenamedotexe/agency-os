@@ -6,23 +6,30 @@ import { MessageBubble } from './message-bubble'
 import { ChatInput } from './chat-input'
 import { useRealtimeMessages, usePresence } from '@/shared/hooks/use-realtime-messages'
 import { getMessages, sendMessage, markAsRead } from '@/app/actions/chat'
+import { sendSmsMessage } from '@/app/actions/sms'
 import { Loader2 } from 'lucide-react'
 import { useInView } from 'react-intersection-observer'
 import { cn } from '@/shared/lib/utils'
 import { useIsMobile } from '@/shared/hooks/use-mobile'
+import { useToast } from '@/shared/hooks/use-toast'
+import type { MessageType } from './message-type-toggle'
 
 interface ChatThreadProps {
   conversationId: string
   currentUserId: string
   showSystemMessages?: boolean
   className?: string
+  clientPhone?: string
+  userRole?: string
 }
 
 export function ChatThread({ 
   conversationId, 
   currentUserId,
   showSystemMessages = true,
-  className 
+  className,
+  clientPhone,
+  userRole
 }: ChatThreadProps) {
   const [messages, setMessages] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -33,6 +40,7 @@ export function ChatThread({
   const { messages: realtimeMessages } = useRealtimeMessages(conversationId)
   const { onlineUsers } = usePresence(conversationId)
   const isMobile = useIsMobile()
+  const { toast } = useToast()
   
   // Load initial messages
   useEffect(() => {
@@ -87,14 +95,45 @@ export function ChatThread({
     }
   }, [conversationId, isMobile])
   
-  const handleSendMessage = async (content: string, attachments: any[]) => {
-    console.log('📤 Sending message:', { content, attachments: attachments.length })
+  const handleSendMessage = async (content: string, attachments: any[], messageType: MessageType = 'chat') => {
+    console.log('📤 Sending message:', { content, attachments: attachments.length, messageType })
     setSending(true)
     
+    // Handle SMS sending
+    if (messageType === 'sms') {
+      if (!clientPhone) {
+        toast({
+          title: "SMS failed",
+          description: "Client phone number not available for SMS.",
+          variant: "destructive"
+        })
+        setSending(false)
+        return
+      }
+
+      const { error: smsError } = await sendSmsMessage({
+        conversationId,
+        content,
+        recipientPhone: clientPhone
+      })
+      
+      if (smsError) {
+        toast({
+          title: "SMS failed",
+          description: smsError,
+          variant: "destructive"
+        })
+        setSending(false)
+        return
+      }
+    }
+
+    // Always create chat message record
     const { message, error } = await sendMessage({
       conversationId,
       content,
-      attachments
+      attachments,
+      sourceType: messageType
     })
     
     console.log('📤 Send message result:', { message: !!message, error })
@@ -108,6 +147,12 @@ export function ChatThread({
           messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
         }, 100)
       }
+    } else if (error) {
+      toast({
+        title: "Message failed",
+        description: typeof error === 'string' ? error : error.message,
+        variant: "destructive"
+      })
     }
     
     setSending(false)
@@ -167,6 +212,8 @@ export function ChatThread({
           placeholder="Type a message..."
           conversationId={conversationId}
           currentUserId={currentUserId}
+          userRole={userRole}
+          lastMessageSourceType={messages.length > 0 ? messages[messages.length - 1].source_type as MessageType : 'chat'}
         />
       </div>
     </div>

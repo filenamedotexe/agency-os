@@ -138,6 +138,7 @@ export function FloatingChat({ userId, userRole, userName }: FloatingChatProps) 
               <ChatThread
                 conversationId={conversationId}
                 currentUserId={userId}
+                userRole={userRole}
                 showSystemMessages={true}
                 className="flex-1"
               />
