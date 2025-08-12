@@ -188,19 +188,19 @@ export function ChatInput({
   }
   
   return (
-    <div className="border-t">
+    <div className="w-full">
       {attachments.length > 0 && (
-        <div className="flex gap-2 p-2 border-b flex-wrap">
+        <div className="flex gap-2 p-2 border-b flex-wrap bg-muted/30">
           {attachments.map((attachment, index) => (
             <div
               key={index}
-              className="flex items-center gap-1 px-2 py-1 bg-muted rounded-md text-sm"
+              className="flex items-center gap-1 px-2 py-1 bg-background border rounded-md text-xs sm:text-sm"
             >
-              <Paperclip className="h-3 w-3" />
-              <span className="max-w-[150px] truncate">{attachment.name}</span>
+              <Paperclip className="h-3 w-3 flex-shrink-0" />
+              <span className="max-w-[100px] sm:max-w-[150px] truncate">{attachment.name}</span>
               <button
                 onClick={() => removeAttachment(index)}
-                className="ml-1 hover:text-destructive"
+                className="ml-1 hover:text-destructive flex-shrink-0"
                 disabled={uploading}
               >
                 <X className="h-3 w-3" />
@@ -211,7 +211,7 @@ export function ChatInput({
       )}
       
       <div {...getRootProps()} className={cn(
-        "flex gap-2 p-3 relative",
+        "flex gap-2 p-3 sm:p-4 relative",
         isDragActive && "bg-muted/50"
       )}>
         <input {...getInputProps()} />

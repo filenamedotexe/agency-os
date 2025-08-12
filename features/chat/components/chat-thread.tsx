@@ -9,6 +9,7 @@ import { getMessages, sendMessage, markAsRead } from '@/app/actions/chat'
 import { Loader2 } from 'lucide-react'
 import { useInView } from 'react-intersection-observer'
 import { cn } from '@/shared/lib/utils'
+import { useIsMobile } from '@/shared/hooks/use-mobile'
 
 interface ChatThreadProps {
   conversationId: string
@@ -27,9 +28,11 @@ export function ChatThread({
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
   const scrollAreaRef = useRef<HTMLDivElement>(null)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
   const { ref: bottomRef, inView } = useInView()
   const { messages: realtimeMessages } = useRealtimeMessages(conversationId)
   const { onlineUsers } = usePresence(conversationId)
+  const isMobile = useIsMobile()
   
   // Load initial messages
   useEffect(() => {
@@ -63,10 +66,19 @@ export function ChatThread({
   
   // Auto-scroll to bottom on new messages
   useEffect(() => {
-    if (scrollAreaRef.current) {
-      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' })
     }
   }, [messages])
+  
+  // Scroll to bottom on mount for mobile
+  useEffect(() => {
+    if (isMobile && messagesEndRef.current) {
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'auto' })
+      }, 100)
+    }
+  }, [conversationId, isMobile])
   
   const handleSendMessage = async (content: string, attachments: any[]) => {
     setSending(true)
@@ -79,6 +91,12 @@ export function ChatThread({
     
     if (!error && message) {
       // Message will appear via realtime
+      // Scroll to bottom after sending on mobile
+      if (isMobile) {
+        setTimeout(() => {
+          messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+        }, 100)
+      }
     }
     
     setSending(false)
@@ -97,8 +115,8 @@ export function ChatThread({
   }
   
   return (
-    <div className={cn("flex flex-col h-full", className)}>
-      {onlineUsers.length > 0 && (
+    <div className={cn("flex flex-col h-full overflow-hidden", className)}>
+      {onlineUsers.length > 0 && !isMobile && (
         <div className="px-4 py-2 border-b">
           <div className="flex items-center gap-2">
             <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse" />
@@ -109,32 +127,37 @@ export function ChatThread({
         </div>
       )}
       
-      <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
-        {filteredMessages.length === 0 ? (
-          <div className="text-center text-muted-foreground py-8">
-            No messages yet. Start the conversation!
-          </div>
-        ) : (
-          <>
-            {filteredMessages.map((message) => (
-              <MessageBubble
-                key={message.id}
-                message={message}
-                isOwn={message.sender?.id === currentUserId}
-              />
-            ))}
-            <div ref={bottomRef} />
-          </>
-        )}
-      </ScrollArea>
+      <div className="flex-1 overflow-y-auto" ref={scrollAreaRef}>
+        <div className="p-4 space-y-4">
+          {filteredMessages.length === 0 ? (
+            <div className="text-center text-muted-foreground py-8">
+              No messages yet. Start the conversation!
+            </div>
+          ) : (
+            <>
+              {filteredMessages.map((message) => (
+                <MessageBubble
+                  key={message.id}
+                  message={message}
+                  isOwn={message.sender?.id === currentUserId}
+                />
+              ))}
+            </>
+          )}
+          <div ref={messagesEndRef} />
+          <div ref={bottomRef} />
+        </div>
+      </div>
       
-      <ChatInput
-        onSendMessage={handleSendMessage}
-        disabled={sending}
-        placeholder="Type a message..."
-        conversationId={conversationId}
-        currentUserId={currentUserId}
-      />
+      <div className="border-t bg-background">
+        <ChatInput
+          onSendMessage={handleSendMessage}
+          disabled={sending}
+          placeholder="Type a message..."
+          conversationId={conversationId}
+          currentUserId={currentUserId}
+        />
+      </div>
     </div>
   )
 }

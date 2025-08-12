@@ -20,7 +20,7 @@ export default async function MessagesPage() {
   }
   
   return (
-    <div className="h-[calc(100vh-4rem)]">
+    <div className="flex flex-1 flex-col overflow-hidden">
       <MessagesInbox userId={user.id} />
     </div>
   )
