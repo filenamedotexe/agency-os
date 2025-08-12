@@ -1,188 +1,223 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card"
 import { Badge } from "@/shared/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs"
-import { Eye, Code, Mail, CheckCircle, FileText } from "lucide-react"
+import { Switch } from "@/shared/components/ui/switch"
+import { Button } from "@/shared/components/ui/button"
+import { Eye, Code, Mail, CheckCircle, FileText, RefreshCw, AlertCircle } from "lucide-react"
 import { ScrollArea } from "@/shared/components/ui/scroll-area"
+import { getEmailTemplates, toggleTemplateStatus, type EmailTemplate } from "@/app/actions/email"
+import { useToast } from "@/shared/hooks/use-toast"
+import { Skeleton } from "@/shared/components/ui/skeleton"
 
 export function EmailTemplatePreview() {
-  const [selectedTemplate, setSelectedTemplate] = useState<string>("welcome")
+  const [templates, setTemplates] = useState<EmailTemplate[]>([])
+  const [selectedTemplate, setSelectedTemplate] = useState<string>("")
+  const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
+  const [toggling, setToggling] = useState<string | null>(null)
+  const { toast } = useToast()
 
-  const templates = [
-    {
-      id: "welcome",
-      name: "Welcome Email",
-      description: "Sent when a new client account is created",
-      trigger: "Client profile creation",
-      icon: Mail,
-      status: "Active",
-      sampleData: {
-        firstName: "John",
-        companyName: "Acme Corporation",
-        loginUrl: "https://app.agencyos.dev/login"
-      }
-    },
-    {
-      id: "milestone",
-      name: "Milestone Complete",
-      description: "Sent when a project milestone is marked as complete",
-      trigger: "Milestone status change to 'complete'",
-      icon: CheckCircle,
-      status: "Active",
-      sampleData: {
-        clientName: "Sarah",
-        milestoneName: "Design Phase Complete",
-        serviceName: "Website Redesign",
-        nextSteps: "Development phase begins next week with initial setup and architecture planning.",
-        dashboardUrl: "https://app.agencyos.dev/dashboard"
-      }
-    },
-    {
-      id: "task",
-      name: "Task Assigned",
-      description: "Sent when a task is assigned to a team member",
-      trigger: "Task assignment to team member",
-      icon: FileText,
-      status: "Active",
-      sampleData: {
-        assigneeName: "Mike",
-        taskTitle: "Review design mockups",
-        taskDescription: "Please review the latest design mockups for the homepage and provide feedback on the user flow and visual hierarchy.",
-        dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-        priority: "high",
-        serviceName: "Website Redesign",
-        taskUrl: "https://app.agencyos.dev/tasks/sample-task"
+  const fetchTemplates = async () => {
+    setLoading(true)
+    const { templates: data, error } = await getEmailTemplates()
+    
+    if (error) {
+      toast({
+        title: "Error loading templates",
+        description: error,
+        variant: "destructive"
+      })
+    } else if (data) {
+      setTemplates(data)
+      if (!selectedTemplate && data.length > 0) {
+        setSelectedTemplate(data[0].slug)
       }
     }
-  ]
+    setLoading(false)
+  }
 
-  const currentTemplate = templates.find(t => t.id === selectedTemplate)
+  useEffect(() => {
+    fetchTemplates()
+  }, [])
 
-  // Mock HTML preview for each template
-  const getTemplatePreview = (templateId: string) => {
-    switch (templateId) {
-      case "welcome":
-        return `
-          <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f9fafb; margin: 0; padding: 20px;">
-            <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden;">
-              <div style="background-color: #18181b; padding: 20px; text-align: center;">
-                <h1 style="color: #ffffff; font-size: 24px; font-weight: bold; margin: 0;">AgencyOS</h1>
-              </div>
-              <div style="padding: 32px;">
-                <h2 style="font-size: 24px; font-weight: bold; margin-bottom: 16px;">Welcome to AgencyOS, John! 🎉</h2>
-                <p style="font-size: 16px; line-height: 24px; margin-bottom: 24px;">
-                  We're excited to have Acme Corporation onboard! Your account has been set up and you're ready to start collaborating with our team.
-                </p>
-                <p style="font-size: 16px; margin-bottom: 24px;">Here's what you can do next:</p>
-                <ul style="font-size: 16px; line-height: 24px; margin-bottom: 24px;">
-                  <li>View your active projects and milestones</li>
-                  <li>Track progress in real-time</li>
-                  <li>Communicate directly with your team</li>
-                  <li>Access all project files and deliverables</li>
-                </ul>
-                <a href="#" style="background-color: #3b82f6; color: #ffffff; padding: 12px 24px; border-radius: 6px; text-decoration: none; display: inline-block; font-weight: bold;">
-                  Access Your Dashboard
-                </a>
-              </div>
-            </div>
-          </div>
-        `
-      case "milestone":
-        return `
-          <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f9fafb; margin: 0; padding: 20px;">
-            <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden;">
-              <div style="background-color: #18181b; padding: 20px; text-align: center;">
-                <h1 style="color: #ffffff; font-size: 24px; font-weight: bold; margin: 0;">AgencyOS</h1>
-              </div>
-              <div style="padding: 32px;">
-                <h2 style="font-size: 24px; font-weight: bold; margin-bottom: 16px;">Milestone Complete! ✅</h2>
-                <p style="font-size: 16px; line-height: 24px; margin-bottom: 24px;">Hi Sarah,</p>
-                <p style="font-size: 16px; line-height: 24px; margin-bottom: 24px;">
-                  Great news! We've completed <strong>Design Phase Complete</strong> for your <strong>Website Redesign</strong> project.
-                </p>
-                <p style="font-size: 16px; font-weight: bold; margin-bottom: 8px;">What's Next:</p>
-                <p style="font-size: 16px; line-height: 24px; margin-bottom: 24px;">
-                  Development phase begins next week with initial setup and architecture planning.
-                </p>
-                <a href="#" style="background-color: #10b981; color: #ffffff; padding: 12px 24px; border-radius: 6px; text-decoration: none; display: inline-block; font-weight: bold;">
-                  View Progress
-                </a>
-              </div>
-            </div>
-          </div>
-        `
-      case "task":
-        return `
-          <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f9fafb; margin: 0; padding: 20px;">
-            <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden;">
-              <div style="background-color: #18181b; padding: 20px; text-align: center;">
-                <h1 style="color: #ffffff; font-size: 24px; font-weight: bold; margin: 0;">AgencyOS</h1>
-              </div>
-              <div style="padding: 32px;">
-                <h2 style="font-size: 24px; font-weight: bold; margin-bottom: 16px;">New Task Assigned 📋</h2>
-                <p style="font-size: 16px; line-height: 24px; margin-bottom: 24px;">Hi Mike,</p>
-                <p style="font-size: 16px; line-height: 24px; margin-bottom: 24px;">You've been assigned a new task:</p>
-                <div style="background-color: #f3f4f6; padding: 16px; border-radius: 6px; margin-bottom: 24px;">
-                  <h3 style="font-size: 18px; font-weight: bold; margin: 0 0 8px 0;">Review design mockups</h3>
-                  <p style="font-size: 14px; margin: 0 0 12px 0;">Please review the latest design mockups for the homepage and provide feedback on the user flow and visual hierarchy.</p>
-                  <div style="font-size: 14px;">
-                    <div style="margin-bottom: 4px;"><strong>Project:</strong> Website Redesign</div>
-                    <div style="margin-bottom: 4px;"><strong>Due:</strong> ${new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString()}</div>
-                    <div><strong>Priority:</strong> <span style="color: #ef4444; font-weight: bold;">HIGH</span></div>
-                  </div>
-                </div>
-                <a href="#" style="background-color: #3b82f6; color: #ffffff; padding: 12px 24px; border-radius: 6px; text-decoration: none; display: inline-block; font-weight: bold;">
-                  View Task Details
-                </a>
-              </div>
-            </div>
-          </div>
-        `
+  const handleRefresh = async () => {
+    setRefreshing(true)
+    await fetchTemplates()
+    setRefreshing(false)
+  }
+
+  const handleToggle = async (templateId: string, currentStatus: boolean) => {
+    setToggling(templateId)
+    const { success, error } = await toggleTemplateStatus(templateId, !currentStatus)
+    
+    if (success) {
+      toast({
+        title: "Status updated",
+        description: `Template is now ${!currentStatus ? 'active' : 'inactive'}`,
+      })
+      // Update local state
+      setTemplates(prev => prev.map(t => 
+        t.id === templateId ? { ...t, is_active: !currentStatus } : t
+      ))
+    } else if (error) {
+      toast({
+        title: "Error updating status",
+        description: error,
+        variant: "destructive"
+      })
+    }
+    setToggling(null)
+  }
+
+  const currentTemplate = templates.find(t => t.slug === selectedTemplate)
+
+  // Function to get icon based on trigger event
+  const getIcon = (triggerEvent: string | null) => {
+    switch (triggerEvent) {
+      case 'client_created':
+        return Mail
+      case 'milestone_completed':
+        return CheckCircle
+      case 'task_assigned':
+        return FileText
       default:
-        return "<p>Template preview not available</p>"
+        return Mail
     }
+  }
+
+  // Function to render template preview with replaced variables
+  const renderTemplatePreview = (template: EmailTemplate) => {
+    let htmlContent = template.html_content
+    
+    // Default values for preview
+    const previewData: Record<string, string> = {
+      first_name: "John",
+      last_name: "Doe",
+      company_name: "Acme Corporation",
+      dashboard_url: "https://app.agencyos.dev/dashboard",
+      milestone_name: "Design Phase Complete",
+      service_name: "Website Redesign",
+      next_steps: "Development phase begins next week with initial setup and architecture planning.",
+      assignee_name: "Mike",
+      task_title: "Review design mockups",
+      task_description: "Please review the latest design mockups for the homepage and provide feedback on the user flow and visual hierarchy.",
+      due_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString(),
+      priority: "HIGH",
+      priority_color: "#ef4444",
+      task_url: "https://app.agencyos.dev/tasks/sample-task"
+    }
+    
+    // Replace variables in template
+    Object.entries(previewData).forEach(([key, value]) => {
+      const regex = new RegExp(`{{${key}}}`, "g")
+      htmlContent = htmlContent.replace(regex, value)
+    })
+    
+    return htmlContent
+  }
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {[1, 2, 3].map((i) => (
+            <Card key={i}>
+              <CardHeader>
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-3 w-32 mt-2" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-16 w-full" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  if (templates.length === 0) {
+    return (
+      <Card>
+        <CardContent className="flex flex-col items-center justify-center py-12">
+          <AlertCircle className="h-12 w-12 text-muted-foreground mb-4" />
+          <p className="text-lg font-medium mb-2">No email templates found</p>
+          <p className="text-sm text-muted-foreground">Templates will appear here once configured</p>
+        </CardContent>
+      </Card>
+    )
   }
 
   return (
     <div className="space-y-6">
       {/* Template Selection */}
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-medium">Email Templates</h3>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleRefresh}
+          disabled={refreshing}
+        >
+          <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+          Refresh
+        </Button>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {templates.map((template) => {
-          const Icon = template.icon
+          const Icon = getIcon(template.trigger_event)
           return (
             <Card
               key={template.id}
               className={`cursor-pointer transition-colors ${
-                selectedTemplate === template.id
+                selectedTemplate === template.slug
                   ? "ring-2 ring-primary bg-primary/5"
                   : "hover:bg-accent"
               }`}
-              onClick={() => setSelectedTemplate(template.id)}
+              onClick={() => setSelectedTemplate(template.slug)}
             >
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-2">
                     <Icon className="h-5 w-5 text-muted-foreground" />
-                    <div>
+                    <div className="flex-1">
                       <CardTitle className="text-sm font-medium">
                         {template.name}
                       </CardTitle>
-                      <Badge variant="secondary" className="text-xs mt-1">
-                        {template.status}
-                      </Badge>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Badge 
+                          variant={template.is_active ? "default" : "secondary"}
+                          className="text-xs"
+                        >
+                          {template.is_active ? "Active" : "Inactive"}
+                        </Badge>
+                      </div>
                     </div>
                   </div>
+                  <Switch
+                    checked={template.is_active}
+                    disabled={toggling === template.id}
+                    onCheckedChange={(e) => {
+                      e.stopPropagation?.()
+                      handleToggle(template.id, template.is_active)
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                  />
                 </div>
               </CardHeader>
               <CardContent className="pt-0">
                 <p className="text-sm text-muted-foreground mb-2">
                   {template.description}
                 </p>
-                <p className="text-xs text-muted-foreground">
-                  <strong>Trigger:</strong> {template.trigger}
-                </p>
+                {template.trigger_event && (
+                  <p className="text-xs text-muted-foreground">
+                    <strong>Trigger:</strong> {template.trigger_event.replace(/_/g, ' ')}
+                  </p>
+                )}
               </CardContent>
             </Card>
           )
@@ -196,14 +231,16 @@ export function EmailTemplatePreview() {
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="flex items-center gap-2">
-                  <currentTemplate.icon className="h-5 w-5" />
+                  {React.createElement(getIcon(currentTemplate.trigger_event), { className: "h-5 w-5" })}
                   {currentTemplate.name}
                 </CardTitle>
                 <CardDescription>
-                  Preview of the email template with sample data
+                  Preview with sample data
                 </CardDescription>
               </div>
-              <Badge variant="secondary">{currentTemplate.status}</Badge>
+              <Badge variant={currentTemplate.is_active ? "default" : "secondary"}>
+                {currentTemplate.is_active ? "Active" : "Inactive"}
+              </Badge>
             </div>
           </CardHeader>
           <CardContent>
@@ -213,9 +250,13 @@ export function EmailTemplatePreview() {
                   <Eye className="h-4 w-4" />
                   Preview
                 </TabsTrigger>
-                <TabsTrigger value="data" className="gap-2">
+                <TabsTrigger value="variables" className="gap-2">
                   <Code className="h-4 w-4" />
-                  Sample Data
+                  Variables
+                </TabsTrigger>
+                <TabsTrigger value="subject" className="gap-2">
+                  <Mail className="h-4 w-4" />
+                  Subject
                 </TabsTrigger>
               </TabsList>
               
@@ -224,25 +265,66 @@ export function EmailTemplatePreview() {
                   <ScrollArea className="h-[500px]">
                     <div
                       dangerouslySetInnerHTML={{
-                        __html: getTemplatePreview(selectedTemplate)
+                        __html: renderTemplatePreview(currentTemplate)
                       }}
                     />
                   </ScrollArea>
                 </div>
               </TabsContent>
               
-              <TabsContent value="data" className="mt-4">
+              <TabsContent value="variables" className="mt-4">
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-sm">Sample Template Data</CardTitle>
+                    <CardTitle className="text-sm">Template Variables</CardTitle>
                     <CardDescription>
-                      This data is used when generating the template preview
+                      These variables are replaced with actual data when the email is sent
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <pre className="bg-muted p-4 rounded-lg overflow-auto text-sm">
-                      {JSON.stringify(currentTemplate.sampleData, null, 2)}
-                    </pre>
+                    <div className="space-y-3">
+                      {currentTemplate.variables.map((variable, index) => (
+                        <div key={index} className="flex items-start gap-3 p-3 bg-muted rounded-lg">
+                          <code className="text-sm font-mono text-primary">
+                            {`{{${variable.key}}}`}
+                          </code>
+                          <span className="text-sm text-muted-foreground">
+                            {variable.description}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="subject" className="mt-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-sm">Email Subject</CardTitle>
+                    <CardDescription>
+                      The subject line with variables
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="p-3 bg-muted rounded-lg">
+                        <p className="text-sm font-medium mb-1">Template:</p>
+                        <code className="text-sm font-mono">{currentTemplate.subject}</code>
+                      </div>
+                      <div className="p-3 bg-muted rounded-lg">
+                        <p className="text-sm font-medium mb-1">Preview:</p>
+                        <p className="text-sm">
+                          {currentTemplate.subject.replace(/{{(\w+)}}/g, (match, key) => {
+                            const previewValues: Record<string, string> = {
+                              first_name: "John",
+                              milestone_name: "Design Phase Complete",
+                              task_title: "Review design mockups"
+                            }
+                            return previewValues[key] || match
+                          })}
+                        </p>
+                      </div>
+                    </div>
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -258,17 +340,21 @@ export function EmailTemplatePreview() {
         </CardHeader>
         <CardContent className="space-y-2">
           <div className="text-sm space-y-1">
-            <p className="text-muted-foreground">
-              • Templates are built with React Email components for consistent styling
+            <p className="text-muted-foreground flex items-center gap-2">
+              <CheckCircle className="h-4 w-4 text-green-500" />
+              Templates are stored in the database and can be edited
             </p>
-            <p className="text-muted-foreground">
-              • All templates are mobile-responsive and tested across email clients
+            <p className="text-muted-foreground flex items-center gap-2">
+              <CheckCircle className="h-4 w-4 text-green-500" />
+              Variables are automatically replaced with actual data
             </p>
-            <p className="text-muted-foreground">
-              • Templates automatically include unsubscribe links and branding
+            <p className="text-muted-foreground flex items-center gap-2">
+              <CheckCircle className="h-4 w-4 text-green-500" />
+              Active/Inactive status controls whether emails are sent
             </p>
-            <p className="text-muted-foreground">
-              • Sample data shown here is used for testing and previews only
+            <p className="text-muted-foreground flex items-center gap-2">
+              <CheckCircle className="h-4 w-4 text-green-500" />
+              All email sends are logged in the database
             </p>
           </div>
         </CardContent>
@@ -276,3 +362,6 @@ export function EmailTemplatePreview() {
     </div>
   )
 }
+
+// Import React at the top level for createElement
+import React from 'react'

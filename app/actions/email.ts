@@ -201,6 +201,129 @@ export async function sendTaskAssigned(taskId: string) {
   })
 }
 
+// Database Template Management Functions
+
+export interface EmailTemplate {
+  id: string
+  name: string
+  slug: string
+  subject: string
+  description: string | null
+  html_content: string
+  text_content: string | null
+  variables: Array<{ key: string; description: string }>
+  is_active: boolean
+  trigger_event: string | null
+  created_at: string
+  updated_at: string
+}
+
+// Fetch all email templates from database
+export async function getEmailTemplates() {
+  const supabase = await createClient()
+  
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: "Not authenticated" }
+  
+  // Check if user is admin
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single()
+  
+  if (profile?.role !== "admin") {
+    return { error: "Unauthorized" }
+  }
+  
+  const { data: templates, error } = await supabase
+    .from("email_templates")
+    .select("*")
+    .order("created_at", { ascending: false })
+  
+  if (error) {
+    console.error("Error fetching templates:", error)
+    return { error: error.message }
+  }
+  
+  return { templates }
+}
+
+// Toggle template active status
+export async function toggleTemplateStatus(templateId: string, isActive: boolean) {
+  const supabase = await createClient()
+  
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: "Not authenticated" }
+  
+  // Check if user is admin
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single()
+  
+  if (profile?.role !== "admin") {
+    return { error: "Unauthorized" }
+  }
+  
+  const { error } = await supabase
+    .from("email_templates")
+    .update({ 
+      is_active: isActive,
+      updated_at: new Date().toISOString(),
+      updated_by: user.id
+    })
+    .eq("id", templateId)
+  
+  if (error) {
+    console.error("Error updating template status:", error)
+    return { error: error.message }
+  }
+  
+  return { success: true }
+}
+
+// Update email template
+export async function updateEmailTemplate(
+  templateId: string,
+  updates: Partial<EmailTemplate>
+) {
+  const supabase = await createClient()
+  
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: "Not authenticated" }
+  
+  // Check if user is admin
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single()
+  
+  if (profile?.role !== "admin") {
+    return { error: "Unauthorized" }
+  }
+  
+  const { data: template, error } = await supabase
+    .from("email_templates")
+    .update({
+      ...updates,
+      updated_at: new Date().toISOString(),
+      updated_by: user.id
+    })
+    .eq("id", templateId)
+    .select()
+    .single()
+  
+  if (error) {
+    console.error("Error updating template:", error)
+    return { error: error.message }
+  }
+  
+  return { template }
+}
+
 // Test email function for admin
 export async function sendTestEmail(template: string, recipientEmail: string) {
   const supabase = await createClient()
