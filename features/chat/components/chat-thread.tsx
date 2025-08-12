@@ -48,14 +48,21 @@ export function ChatThread({
   
   // Add realtime messages
   useEffect(() => {
+    console.log('💬 Realtime messages updated:', realtimeMessages.length)
     if (realtimeMessages.length > 0) {
       const lastRealtime = realtimeMessages[realtimeMessages.length - 1]
-      const exists = messages.some(m => m.id === lastRealtime.id)
-      if (!exists) {
-        setMessages(prev => [...prev, lastRealtime])
-      }
+      console.log('💬 Processing last realtime message:', lastRealtime)
+      setMessages(prev => {
+        const exists = prev.some(m => m.id === lastRealtime.id)
+        console.log('💬 Message exists in current messages?', exists)
+        if (!exists) {
+          console.log('💬 Adding realtime message to chat thread')
+          return [...prev, lastRealtime]
+        }
+        return prev
+      })
     }
-  }, [realtimeMessages, messages])
+  }, [realtimeMessages])
   
   // Mark as read when viewing
   useEffect(() => {
@@ -81,6 +88,7 @@ export function ChatThread({
   }, [conversationId, isMobile])
   
   const handleSendMessage = async (content: string, attachments: any[]) => {
+    console.log('📤 Sending message:', { content, attachments: attachments.length })
     setSending(true)
     
     const { message, error } = await sendMessage({
@@ -89,7 +97,10 @@ export function ChatThread({
       attachments
     })
     
+    console.log('📤 Send message result:', { message: !!message, error })
+    
     if (!error && message) {
+      console.log('📤 Message sent successfully, waiting for realtime update')
       // Message will appear via realtime
       // Scroll to bottom after sending on mobile
       if (isMobile) {

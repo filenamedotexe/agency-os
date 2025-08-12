@@ -10,6 +10,8 @@ export function useRealtimeMessages(conversationId: string) {
   const supabase = createClient()
   
   const subscribeToMessages = useCallback(() => {
+    console.log('🔴 Subscribing to realtime messages for conversation:', conversationId)
+    
     const channel = supabase
       .channel(`conversation:${conversationId}`)
       .on(
@@ -21,6 +23,8 @@ export function useRealtimeMessages(conversationId: string) {
           filter: `conversation_id=eq.${conversationId}`
         },
         async (payload) => {
+          console.log('🟢 Realtime message received:', payload)
+          
           // Fetch full message with sender details
           const { data: newMessage } = await supabase
             .from('messages')
@@ -31,12 +35,25 @@ export function useRealtimeMessages(conversationId: string) {
             .eq('id', payload.new.id)
             .single()
           
+          console.log('🟡 Fetched full message:', newMessage)
+          
           if (newMessage) {
-            setMessages(prev => [...prev, newMessage])
+            setMessages(prev => {
+              // Avoid duplicates by checking if message already exists
+              const exists = prev.some(m => m.id === newMessage.id)
+              if (!exists) {
+                console.log('🟢 Adding new message to realtime state')
+                return [...prev, newMessage]
+              }
+              console.log('🟠 Message already exists, skipping')
+              return prev
+            })
           }
         }
       )
-      .subscribe()
+      .subscribe((status) => {
+        console.log('📡 Realtime subscription status:', status)
+      })
     
     setChannel(channel)
     
@@ -44,6 +61,9 @@ export function useRealtimeMessages(conversationId: string) {
   }, [conversationId, supabase])
   
   useEffect(() => {
+    // Reset messages when conversation changes
+    setMessages([])
+    
     const channel = subscribeToMessages()
     
     return () => {

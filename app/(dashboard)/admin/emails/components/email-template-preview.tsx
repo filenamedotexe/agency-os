@@ -201,8 +201,7 @@ export function EmailTemplatePreview() {
                   <Switch
                     checked={template.is_active}
                     disabled={toggling === template.id}
-                    onCheckedChange={(e) => {
-                      e.stopPropagation?.()
+                    onCheckedChange={(checked) => {
                       handleToggle(template.id, template.is_active)
                     }}
                     onClick={(e) => e.stopPropagation()}

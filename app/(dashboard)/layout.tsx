@@ -52,6 +52,7 @@ export default async function DashboardLayout({
         <FloatingChat 
           userId={user.id} 
           userRole={profile?.role || 'client'}
+          userName={profile ? `${profile.first_name} ${profile.last_name}` : undefined}
         />
       )}
     </SidebarProvider>

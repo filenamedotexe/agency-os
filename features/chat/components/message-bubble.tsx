@@ -114,12 +114,14 @@ export function MessageBubble({ message, isOwn }: MessageBubbleProps) {
                     : "bg-muted"
                 )}
               >
-                <FileIcon className="h-4 w-4" />
-                <span className="flex-1 truncate">{attachment.name}</span>
-                <span className="text-xs opacity-70">
-                  {formatFileSize(attachment.size)}
-                </span>
-                <Download className="h-3 w-3" />
+                <FileIcon className="h-4 w-4 flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <span className="text-sm font-medium break-all">{attachment.name}</span>
+                  <div className="text-xs opacity-70">
+                    {formatFileSize(attachment.size)}
+                  </div>
+                </div>
+                <Download className="h-3 w-3 flex-shrink-0" />
               </a>
             ))}
           </div>
