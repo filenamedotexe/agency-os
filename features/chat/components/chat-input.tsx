@@ -190,14 +190,14 @@ export function ChatInput({
   return (
     <div className="w-full">
       {attachments.length > 0 && (
-        <div className="flex gap-2 p-2 border-b flex-wrap bg-muted/30">
+        <div className="flex gap-1 sm:gap-2 p-2 border-b flex-wrap bg-muted/30">
           {attachments.map((attachment, index) => (
             <div
               key={index}
-              className="flex items-center gap-1 px-2 py-1 bg-background border rounded-md text-xs sm:text-sm"
+              className="flex items-center gap-1 px-2 py-1 bg-background border rounded-md text-xs"
             >
               <Paperclip className="h-3 w-3 flex-shrink-0" />
-              <span className="max-w-[100px] sm:max-w-[150px] truncate">{attachment.name}</span>
+              <span className="max-w-[80px] sm:max-w-[120px] md:max-w-[150px] truncate">{attachment.name}</span>
               <button
                 onClick={() => removeAttachment(index)}
                 className="ml-1 hover:text-destructive flex-shrink-0"

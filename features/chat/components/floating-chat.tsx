@@ -48,16 +48,16 @@ export function FloatingChat({ userId, userRole, userName }: FloatingChatProps) 
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             exit={{ scale: 0 }}
-            className="fixed bottom-4 right-4 z-50"
+            className="fixed bottom-2 right-2 sm:bottom-4 sm:right-4 z-50"
           >
             <Button
               onClick={() => setIsOpen(true)}
               size="lg"
-              className="rounded-full h-14 w-14 shadow-lg relative"
+              className="rounded-full h-12 w-12 sm:h-14 sm:w-14 shadow-lg relative"
             >
-              <MessageCircle className="h-6 w-6" />
+              <MessageCircle className="h-5 w-5 sm:h-6 sm:w-6" />
               {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 h-5 w-5 bg-destructive text-destructive-foreground text-xs rounded-full flex items-center justify-center">
+                <span className="absolute -top-1 -right-1 h-4 w-4 sm:h-5 sm:w-5 bg-destructive text-destructive-foreground text-xs rounded-full flex items-center justify-center">
                   {unreadCount}
                 </span>
               )}
@@ -76,56 +76,59 @@ export function FloatingChat({ userId, userRole, userName }: FloatingChatProps) 
             className={cn(
               "fixed z-50 bg-background border shadow-xl flex flex-col",
               isExpanded 
-                ? "inset-4 rounded-lg" // Takes up ~75% of screen with 1rem margin
-                : "bottom-4 right-4 w-[380px] h-[600px] md:w-[400px] md:h-[600px] rounded-lg"
+                ? "inset-2 sm:inset-4 rounded-lg" // Mobile: 0.5rem margin, Desktop: 1rem margin
+                : "bottom-2 right-2 sm:bottom-4 sm:right-4 rounded-lg",
+              !isExpanded && "w-[calc(100vw-1rem)] max-w-[380px] h-[calc(100vh-8rem)] max-h-[600px]",
+              !isExpanded && "sm:w-[380px] sm:h-[600px]",
+              !isExpanded && "md:w-[400px] md:h-[600px]"
             )}
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b">
-              <div className="flex items-center gap-2">
-                <MessageCircle className="h-5 w-5" />
-                <span className="font-semibold">Chat with Team</span>
+            <div className="flex items-center justify-between p-3 sm:p-4 border-b">
+              <div className="flex items-center gap-2 min-w-0 flex-1">
+                <MessageCircle className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
+                <span className="font-semibold text-sm sm:text-base truncate">Chat with Team</span>
               </div>
-              <div className="flex gap-1">
+              <div className="flex gap-1 flex-shrink-0">
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8"
+                  className="h-7 w-7 sm:h-8 sm:w-8"
                   onClick={() => setShowAttachments(true)}
                   title="View attachments"
                 >
-                  <Paperclip className="h-4 w-4" />
+                  <Paperclip className="h-3 w-3 sm:h-4 sm:w-4" />
                 </Button>
                 {!isExpanded && (
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8"
+                    className="h-7 w-7 sm:h-8 sm:w-8"
                     onClick={() => setIsMinimized(!isMinimized)}
                     title={isMinimized ? "Show chat" : "Minimize chat"}
                   >
-                    <Minimize2 className="h-4 w-4" />
+                    <Minimize2 className="h-3 w-3 sm:h-4 sm:w-4" />
                   </Button>
                 )}
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8"
+                  className="h-7 w-7 sm:h-8 sm:w-8"
                   onClick={() => {
                     setIsExpanded(!isExpanded)
                     if (isMinimized) setIsMinimized(false)
                   }}
                   title={isExpanded ? "Restore window" : "Expand fullscreen"}
                 >
-                  {isExpanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+                  {isExpanded ? <Minimize2 className="h-3 w-3 sm:h-4 sm:w-4" /> : <Maximize2 className="h-3 w-3 sm:h-4 sm:w-4" />}
                 </Button>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8"
+                  className="h-7 w-7 sm:h-8 sm:w-8"
                   onClick={() => setIsOpen(false)}
                 >
-                  <X className="h-4 w-4" />
+                  <X className="h-3 w-3 sm:h-4 sm:w-4" />
                 </Button>
               </div>
             </div>

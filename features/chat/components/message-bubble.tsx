@@ -78,7 +78,7 @@ export function MessageBubble({ message, isOwn }: MessageBubbleProps) {
       </Avatar>
       
       <div className={cn(
-        "flex flex-col gap-1 max-w-[70%]",
+        "flex flex-col gap-1 max-w-[85%] sm:max-w-[75%] md:max-w-[70%]",
         isOwn && "items-end"
       )}>
         <div className="flex items-baseline gap-2">
@@ -108,7 +108,7 @@ export function MessageBubble({ message, isOwn }: MessageBubbleProps) {
                 target="_blank"
                 rel="noopener noreferrer"
                 className={cn(
-                  "flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:opacity-80 transition-opacity",
+                  "flex items-center gap-2 px-2 py-2 sm:px-3 rounded-lg text-sm hover:opacity-80 transition-opacity",
                   isOwn 
                     ? "bg-primary/90 text-primary-foreground" 
                     : "bg-muted"
