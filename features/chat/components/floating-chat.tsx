@@ -22,22 +22,52 @@ export function FloatingChat({ userId, userRole, userName }: FloatingChatProps) 
   const [conversationId, setConversationId] = useState<string | null>(null)
   const [unreadCount, setUnreadCount] = useState(0)
   const [showAttachments, setShowAttachments] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
   
   useEffect(() => {
     // Only show for clients
-    if (userRole !== 'client') return
+    if (userRole !== 'client') {
+      setIsLoading(false)
+      return
+    }
     
     async function initConversation() {
-      const { conversation } = await getOrCreateConversation(userId)
-      if (conversation) {
-        setConversationId(conversation.id)
-        setUnreadCount(conversation.unread_count || 0)
+      try {
+        const { conversation, error } = await getOrCreateConversation(userId)
+        
+        if (conversation) {
+          setConversationId(conversation.id)
+          setUnreadCount(conversation.unread_count || 0)
+        } else if (error) {
+          console.error('Failed to get conversation:', error)
+        }
+      } catch (error) {
+        console.error('Exception in initConversation:', error)
+      } finally {
+        setIsLoading(false)
       }
     }
     initConversation()
   }, [userId, userRole])
   
-  if (userRole !== 'client' || !conversationId) return null
+  // Don't show for non-clients
+  if (userRole !== 'client') {
+    return null
+  }
+  
+  // Show loading state while getting conversation
+  if (isLoading) {
+    return (
+      <div className="fixed bottom-2 right-2 sm:bottom-4 sm:right-4 z-50">
+        <div className="h-12 w-12 sm:h-14 sm:w-14 rounded-full bg-primary/20 animate-pulse" />
+      </div>
+    )
+  }
+  
+  // Don't show if no conversation
+  if (!conversationId) {
+    return null
+  }
   
   return (
     <>
@@ -54,6 +84,7 @@ export function FloatingChat({ userId, userRole, userName }: FloatingChatProps) 
               onClick={() => setIsOpen(true)}
               size="lg"
               className="rounded-full h-12 w-12 sm:h-14 sm:w-14 shadow-lg relative"
+              data-testid="floating-chat-button"
             >
               <MessageCircle className="h-5 w-5 sm:h-6 sm:w-6" />
               {unreadCount > 0 && (

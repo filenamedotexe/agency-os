@@ -54,19 +54,26 @@ export function ChatThread({
     loadMessages()
   }, [conversationId])
   
-  // Add realtime messages
+  // Add realtime messages (with improved deduplication)
   useEffect(() => {
     console.log('💬 Realtime messages updated:', realtimeMessages.length)
     if (realtimeMessages.length > 0) {
       const lastRealtime = realtimeMessages[realtimeMessages.length - 1]
-      console.log('💬 Processing last realtime message:', lastRealtime)
+      console.log('💬 Processing last realtime message:', lastRealtime.id, 'from user:', lastRealtime.sender?.id)
+      
       setMessages(prev => {
+        // Check if message already exists by ID
         const exists = prev.some(m => m.id === lastRealtime.id)
         console.log('💬 Message exists in current messages?', exists)
+        
         if (!exists) {
           console.log('💬 Adding realtime message to chat thread')
-          return [...prev, lastRealtime]
+          // Insert in chronological order to maintain consistency
+          const newMessages = [...prev, lastRealtime]
+          return newMessages.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
         }
+        
+        console.log('💬 Message already exists (optimistic or duplicate), skipping')
         return prev
       })
     }
@@ -139,14 +146,23 @@ export function ChatThread({
     console.log('📤 Send message result:', { message: !!message, error })
     
     if (!error && message) {
-      console.log('📤 Message sent successfully, waiting for realtime update')
-      // Message will appear via realtime
-      // Scroll to bottom after sending on mobile
-      if (isMobile) {
-        setTimeout(() => {
-          messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-        }, 100)
-      }
+      console.log('📤 Message sent successfully, adding optimistically')
+      // OPTIMISTIC UPDATE: Add message immediately to local state
+      setMessages(prev => {
+        // Check if message already exists (prevent duplicates)
+        const exists = prev.some(m => m.id === message.id)
+        if (!exists) {
+          console.log('📤 Adding message optimistically')
+          return [...prev, message]
+        }
+        console.log('📤 Message already exists, skipping optimistic update')
+        return prev
+      })
+      
+      // Scroll to bottom after sending
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+      }, 100)
     } else if (error) {
       toast({
         title: "Message failed",

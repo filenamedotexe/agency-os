@@ -23,10 +23,10 @@ export function useRealtimeMessages(conversationId: string) {
           filter: `conversation_id=eq.${conversationId}`
         },
         async (payload) => {
-          console.log('🟢 Realtime message received:', payload)
+          console.log('🟢 Realtime message received:', payload.new.id, 'for conversation:', payload.new.conversation_id)
           
           // Fetch full message with sender details
-          const { data: newMessage } = await supabase
+          const { data: newMessage, error } = await supabase
             .from('messages')
             .select(`
               *,
@@ -35,7 +35,12 @@ export function useRealtimeMessages(conversationId: string) {
             .eq('id', payload.new.id)
             .single()
           
-          console.log('🟡 Fetched full message:', newMessage)
+          if (error) {
+            console.error('🔴 Error fetching realtime message:', error)
+            return
+          }
+          
+          console.log('🟡 Fetched full message:', newMessage?.id, 'from:', newMessage?.sender?.email)
           
           if (newMessage) {
             setMessages(prev => {
@@ -45,7 +50,7 @@ export function useRealtimeMessages(conversationId: string) {
                 console.log('🟢 Adding new message to realtime state')
                 return [...prev, newMessage]
               }
-              console.log('🟠 Message already exists, skipping')
+              console.log('🟠 Message already exists in realtime state, skipping')
               return prev
             })
           }
