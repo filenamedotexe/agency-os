@@ -28,6 +28,7 @@ import {
   LayoutDashboard,
   UserCircle,
   MessageCircle,
+  BookOpen,
   LogOut
 } from "lucide-react"
 
@@ -56,6 +57,12 @@ const navigation: NavItem[] = [
     url: "/messages",
     icon: MessageCircle,
     roles: ["admin", "team_member"]
+  },
+  {
+    title: "Knowledge Hub",
+    url: "/knowledge",
+    icon: BookOpen,
+    roles: ["admin", "team_member", "client"]
   },
   {
     title: "Services",

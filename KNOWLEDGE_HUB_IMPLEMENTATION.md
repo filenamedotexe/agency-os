@@ -1186,9 +1186,26 @@ console.log('Resource list rendered:', document.querySelector('[data-testid="res
 
 ---
 
-## Phase 4: File Upload System (3-4 hours)
+## Phase 4: Enhanced File Management System (4-5 hours) - SIMPLIFIED
 
-### 4.1 Upload Component
+**SIMPLIFIED SCOPE**: Focus on core functionality only - NO enterprise features
+
+### Removed from Phase 4:
+- ❌ File version management  
+- ❌ Advanced file sharing/permissions
+- ❌ Bulk operations
+- ❌ File compression/optimization
+- ❌ Complex metadata and tagging
+
+### Core Features Only:
+- ✅ Enhanced drag-and-drop upload with progress
+- ✅ File type detection and categorization  
+- ✅ Basic file preview (images/documents)
+- ✅ Simple folder organization
+- ✅ Basic file operations (upload, delete, move)
+- ✅ Search and filter by name/type
+
+### 4.1 Enhanced Upload Component
 
 Create: `app/(dashboard)/knowledge/components/resource-upload.tsx`
 
