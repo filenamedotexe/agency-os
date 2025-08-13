@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { getUserConversations } from '@/app/actions/chat'
+import { getUserConversations, markAsRead } from '@/app/actions/chat'
 import { ChatThread } from './chat-thread'
 import { cn } from '@/shared/lib/utils'
 import { Avatar, AvatarFallback } from '@/shared/components/ui/avatar'
@@ -10,8 +10,7 @@ import { formatDistanceToNow } from 'date-fns'
 import { Badge } from '@/shared/components/ui/badge'
 import { ScrollArea } from '@/shared/components/ui/scroll-area'
 import { Button } from '@/shared/components/ui/button'
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/shared/components/ui/sheet'
-import { Plus, User, Paperclip, Menu } from 'lucide-react'
+import { Plus, User, Paperclip, ArrowLeft } from 'lucide-react'
 import { NewMessageModal } from './new-message-modal'
 import { ClientAttachmentsModal } from './client-attachments-modal'
 import { useIsMobile } from '@/shared/hooks/use-mobile'
@@ -30,7 +29,6 @@ export function MessagesInbox({ userId, userRole }: MessagesInboxProps) {
   const [showNewMessageModal, setShowNewMessageModal] = useState(false)
   const [showAttachmentsModal, setShowAttachmentsModal] = useState(false)
   const [selectedClientForAttachments, setSelectedClientForAttachments] = useState<{id: string, name: string} | null>(null)
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const isMobile = useIsMobile()
   const chatContainerRef = useRef<HTMLDivElement>(null)
   
@@ -44,9 +42,32 @@ export function MessagesInbox({ userId, userRole }: MessagesInboxProps) {
     if (urlConversationId && data.some(c => c.id === urlConversationId)) {
       // If URL has valid conversation ID, select it
       setSelectedConversationId(urlConversationId)
+      // Mark as read
+      await markAsRead(urlConversationId)
+      setConversations(prev => prev.map(conv => 
+        conv.id === urlConversationId 
+          ? { ...conv, unread_count: 0 }
+          : conv
+      ))
     } else if (data.length > 0 && !selectedConversationId) {
-      // Otherwise select first conversation if none selected
-      setSelectedConversationId(data[0].id)
+      // Check window width directly to avoid hydration issues
+      const isMobileView = typeof window !== 'undefined' && window.innerWidth < 768
+      
+      if (!isMobileView) {
+        // On desktop, select first conversation if none selected
+        const firstConversationId = data[0].id
+        setSelectedConversationId(firstConversationId)
+        // Mark as read if it has unread messages
+        if (data[0].unread_count > 0) {
+          await markAsRead(firstConversationId)
+          setConversations(prev => prev.map(conv => 
+            conv.id === firstConversationId 
+              ? { ...conv, unread_count: 0 }
+              : conv
+          ))
+        }
+      }
+      // On mobile, leave unselected to show conversation list
     }
     setLoading(false)
   }
@@ -75,10 +96,18 @@ export function MessagesInbox({ userId, userRole }: MessagesInboxProps) {
     setShowAttachmentsModal(true)
   }
   
-  const handleSelectConversation = (conversationId: string) => {
+  const handleSelectConversation = async (conversationId: string) => {
     setSelectedConversationId(conversationId)
-    // Close mobile menu when conversation is selected
-    setMobileMenuOpen(false)
+    
+    // Mark conversation as read
+    await markAsRead(conversationId)
+    
+    // Update local state to remove unread badge immediately
+    setConversations(prev => prev.map(conv => 
+      conv.id === conversationId 
+        ? { ...conv, unread_count: 0 }
+        : conv
+    ))
     
     // Auto-scroll to chat input on mobile
     if (isMobile && chatContainerRef.current) {
@@ -91,25 +120,23 @@ export function MessagesInbox({ userId, userRole }: MessagesInboxProps) {
     }
   }
   
-  // Conversation list component (reused for desktop and mobile)
-  const ConversationList = ({ mobile = false }: { mobile?: boolean }) => (
+  // Conversation list component for desktop/tablet
+  const ConversationList = () => (
     <>
       <div className={cn(
         "border-b bg-background",
         "p-4"
       )}>
-        <div className="flex items-center justify-between gap-3 sm:p-4">
+        <div className="flex items-center justify-between gap-2">
           <h2 className="text-lg font-semibold">Messages</h2>
           <Button 
             size="sm" 
-            onClick={() => {
-              setShowNewMessageModal(true)
-              if (mobile) setMobileMenuOpen(false)
-            }}
-            className="gap-4"
+            onClick={() => setShowNewMessageModal(true)}
+            className="gap-1.5 px-3"
+            data-testid="new-message-button"
           >
-            <Plus className="h-4 w-4" />
-            <span className="hidden sm:inline">New</span>
+            <Plus className="h-4 w-4 flex-shrink-0" />
+            <span className="hidden xs:inline">New</span>
           </Button>
         </div>
       </div>
@@ -133,6 +160,7 @@ export function MessagesInbox({ userId, userRole }: MessagesInboxProps) {
               return (
                 <div
                   key={conversation.id}
+                  data-testid={`conversation-${conversation.id}`}
                   className={cn(
                     "w-full p-3 sm:p-4 rounded-lg transition-colors cursor-pointer relative",
                     "hover:bg-accent",
@@ -141,7 +169,7 @@ export function MessagesInbox({ userId, userRole }: MessagesInboxProps) {
                   )}
                   onClick={() => handleSelectConversation(conversation.id)}
                 >
-                  <div className="flex items-start gap-3 sm:p-4">
+                  <div className="flex items-start gap-3">
                     <Avatar className="h-10 w-10 flex-shrink-0">
                       <AvatarFallback>
                         {client?.first_name?.[0] || client?.email[0].toUpperCase()}
@@ -149,13 +177,13 @@ export function MessagesInbox({ userId, userRole }: MessagesInboxProps) {
                     </Avatar>
                     
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-3 sm:p-4 mb-1">
+                      <div className="flex items-start justify-between gap-2 mb-1">
                         <span className="truncate block text-sm font-medium">
                           {client?.client_profiles?.company_name || 
                            `${client?.first_name} ${client?.last_name}` ||
                            client?.email}
                         </span>
-                        <div className="flex items-center gap-4 flex-shrink-0">
+                        <div className="flex items-center gap-2 flex-shrink-0">
                           {hasUnread && (
                             <Badge variant="destructive" className="text-xs px-1.5 h-5">
                               {conversation.unread_count}
@@ -167,14 +195,7 @@ export function MessagesInbox({ userId, userRole }: MessagesInboxProps) {
                               className="p-1.5 hover:bg-muted rounded-md text-muted-foreground hover:text-foreground transition-colors"
                               title={`${conversation.attachment_count} attachments`}
                             >
-                              <div className="relative">
-                                <Paperclip className="h-4 w-4" />
-                                {conversation.attachment_count > 0 && (
-                                  <Badge className="absolute -top-3 sm:p-4 -right-2 h-4 w-4 p-0 text-[10px] bg-blue-500 hover:bg-blue-600 flex items-center justify-center">
-                                    {conversation.attachment_count > 9 ? '9+' : conversation.attachment_count}
-                                  </Badge>
-                                )}
-                              </div>
+                              <Paperclip className="h-4 w-4" />
                             </button>
                           )}
                           <button
@@ -210,121 +231,98 @@ export function MessagesInbox({ userId, userRole }: MessagesInboxProps) {
   )
   
   return (
-    <div className="flex h-full overflow-hidden">
-      {/* Desktop Conversation List - Only show on large screens */}
-      <div className={cn(
-        "hidden lg:flex flex-col border-r bg-background",
-        "w-80 xl:w-96 flex-shrink-0"
-      )}>
-        <ConversationList />
-      </div>
-      
-      {/* Mobile Conversation List (Sheet) - Only on mobile */}
-      {isMobile && (
-        <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-          <SheetContent side="left" className="p-4 sm:p-6 w-[85vw] max-w-[400px] flex flex-col">
-            <SheetHeader className="sr-only">
-              <SheetTitle>Conversations</SheetTitle>
-            </SheetHeader>
-            <ConversationList mobile />
-          </SheetContent>
-        </Sheet>
-      )}
-      
-      {/* Chat Thread */}
-      <div className="flex-1 flex flex-col overflow-hidden" ref={chatContainerRef}>
-        {selectedConversation ? (
-          <>
-            {/* Chat header with mobile menu button */}
-            <div className="border-b bg-background">
-              <div className="flex items-center gap-3 sm:p-4 p-4">
-                {/* Mobile menu button - only on mobile */}
-                {isMobile && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setMobileMenuOpen(true)}
-                    className="lg:hidden flex-shrink-0"
-                  >
-                    <Menu className="h-5 w-5" />
-                  </Button>
-                )}
-                
-                <div className="flex-1 flex items-center justify-between min-w-0">
-                  <div className="min-w-0">
-                    <h3 className="font-medium truncate text-sm">
-                      {selectedConversation.client?.client_profiles?.company_name ||
-                       `${selectedConversation.client?.first_name} ${selectedConversation.client?.last_name}` ||
-                       selectedConversation.client?.email}
-                    </h3>
-                    <p className="text-xs text-muted-foreground">
-                      {selectedConversation.client?.email}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-3 sm:p-4 flex-shrink-0">
-                    {selectedConversation.attachment_count > 0 && (
+    <>
+      <div className="flex h-full overflow-hidden">
+        {/* Desktop/Tablet: Show conversation list in sidebar */}
+        {!isMobile && (
+          <div className="hidden md:flex flex-col border-r bg-background w-80 xl:w-96 flex-shrink-0">
+            <ConversationList />
+          </div>
+        )}
+        
+        {/* Mobile: Show list or chat based on selection */}
+        {/* Desktop: Always show chat area */}
+        {isMobile && !selectedConversationId ? (
+          // Mobile only: Show conversation list when nothing selected
+          <div className="flex-1 flex flex-col">
+            <ConversationList />
+          </div>
+        ) : (
+          // Show chat thread (always on desktop, when selected on mobile)
+          <div className="flex-1 flex flex-col overflow-hidden" ref={chatContainerRef}>
+            {selectedConversation ? (
+              <>
+                {/* Chat header with back button on mobile */}
+                <div className="border-b bg-background">
+                  <div className="flex items-center gap-3 p-3 sm:p-4">
+                    {/* Back button - only on mobile */}
+                    {isMobile && (
                       <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          const client = selectedConversation.client
-                          const clientName = client?.client_profiles?.company_name || 
-                                            `${client?.first_name} ${client?.last_name}` ||
-                                            client?.email
-                          setSelectedClientForAttachments({ id: client.id, name: clientName })
-                          setShowAttachmentsModal(true)
-                        }}
-                        className="gap-4"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setSelectedConversationId(null)}
+                        className="md:hidden flex-shrink-0"
+                        aria-label="Back to conversations"
                       >
-                        <Paperclip className="h-4 w-4" />
-                        <span className="hidden sm:inline">Files</span>
-                        <Badge variant="secondary" className="ml-1">
-                          {selectedConversation.attachment_count}
-                        </Badge>
+                        <ArrowLeft className="h-5 w-5" />
                       </Button>
                     )}
+                    <div className="flex-1 flex items-center justify-between min-w-0">
+                      <div className="min-w-0">
+                        <h3 className="font-medium truncate text-sm">
+                          {selectedConversation.client?.client_profiles?.company_name ||
+                           `${selectedConversation.client?.first_name} ${selectedConversation.client?.last_name}` ||
+                           selectedConversation.client?.email}
+                        </h3>
+                        <p className="text-xs text-muted-foreground">
+                          {selectedConversation.client?.email}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        {selectedConversation.attachment_count > 0 && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              const client = selectedConversation.client
+                              const clientName = client?.client_profiles?.company_name || 
+                                                `${client?.first_name} ${client?.last_name}` ||
+                                                client?.email
+                              setSelectedClientForAttachments({ id: client.id, name: clientName })
+                              setShowAttachmentsModal(true)
+                            }}
+                            className="gap-2"
+                          >
+                            <Paperclip className="h-4 w-4" />
+                            <span className="hidden sm:inline">Files ({selectedConversation.attachment_count})</span>
+                          </Button>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </div>
-            
-            {/* Chat messages */}
-            <ChatThread
-              conversationId={selectedConversationId!}
-              currentUserId={userId}
-              userRole={userRole}
-              showSystemMessages={true}
-              className="flex-1 overflow-hidden"
-            />
-          </>
-        ) : (
-          <div className="h-full flex flex-col">
-            {/* Empty state header with mobile menu button */}
-            {isMobile && (
-              <div className="border-b bg-background p-4 sm:p-6">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setMobileMenuOpen(true)}
-                  className="lg:hidden"
-                >
-                  <Menu className="h-5 w-5" />
-                </Button>
+                
+                {/* Chat messages */}
+                <ChatThread
+                  conversationId={selectedConversationId!}
+                  currentUserId={userId}
+                  userRole={userRole}
+                  showSystemMessages={true}
+                  className="flex-1 overflow-hidden"
+                />
+              </>
+            ) : (
+              <div className="h-full flex flex-col items-center justify-center text-muted-foreground p-4 sm:p-6">
+                <div className="text-center">
+                  <p className="text-lg mb-2">No conversation selected</p>
+                  <p className="text-sm">
+                    {conversations.length === 0 
+                      ? "Start a new conversation to begin messaging"
+                      : "Select a conversation from the list to view messages"}
+                  </p>
+                </div>
               </div>
             )}
-            
-            <div className="flex-1 flex items-center justify-center text-muted-foreground p-4 sm:p-6">
-              <div className="text-center">
-                <p className="text-lg mb-2">No conversation selected</p>
-                <p className="text-sm">
-                  {conversations.length === 0 
-                    ? "Start a new conversation to begin messaging"
-                    : isMobile
-                      ? "Tap the menu to select a conversation"
-                      : "Select a conversation from the list to view messages"}
-                </p>
-              </div>
-            </div>
           </div>
         )}
       </div>
@@ -333,6 +331,7 @@ export function MessagesInbox({ userId, userRole }: MessagesInboxProps) {
       <NewMessageModal 
         open={showNewMessageModal}
         onOpenChange={setShowNewMessageModal}
+        data-testid="new-message-modal"
         onConversationCreated={(conversationId) => {
           setSelectedConversationId(conversationId)
           loadConversations()
@@ -347,6 +346,6 @@ export function MessagesInbox({ userId, userRole }: MessagesInboxProps) {
           clientName={selectedClientForAttachments.name}
         />
       )}
-    </div>
+    </>
   )
 }
