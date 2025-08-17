@@ -22,8 +22,10 @@ import {
 } from '@dnd-kit/sortable'
 import { TaskColumn } from './task-column'
 import { TaskCard } from './task-card'
+import { MobileTaskList } from './mobile-task-list'
 import { updateTaskPosition } from '@/app/actions/tasks'
 import { useToast } from '@/shared/hooks/use-toast'
+import { useMobileDetectSSR } from '@/shared/hooks/use-mobile-detect'
 import { Button } from '@/shared/components/ui/button'
 import { Plus } from 'lucide-react'
 
@@ -45,8 +47,14 @@ export function KanbanBoard({ milestones = [], serviceId, showMilestoneTabs = tr
   const [activeMilestone, setActiveMilestone] = useState(milestones[0]?.id || null)
   const [activeTask, setActiveTask] = useState<any>(null)
   const [tasks, setTasks] = useState<any[]>([])
+  const [mounted, setMounted] = useState(false)
   const router = useRouter()
   const { toast } = useToast()
+  const { isMobile, isTablet, isTouchDevice } = useMobileDetectSSR()
+  
+  useEffect(() => {
+    setMounted(true)
+  }, [])
   
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -193,9 +201,66 @@ export function KanbanBoard({ milestones = [], serviceId, showMilestoneTabs = tr
     )
   }
   
+  // Show mobile view for phones, tablets with touch, or narrow viewports
+  // Don't render mobile view until mounted to avoid hydration mismatch
+  const shouldShowMobileView = mounted && (isMobile || isTablet || isTouchDevice)
+  
+  if (shouldShowMobileView && showMilestoneTabs) {
+    return (
+      <div className="h-full flex flex-col">
+        {/* Milestone Tabs */}
+        {milestones.length > 0 && (
+          <div className="border-b bg-background px-4">
+            <div className="flex gap-2 py-3 overflow-x-auto scrollbar-hide">
+              {milestones.map(milestone => {
+                const totalTasks = milestone.tasks?.length || 0
+                const completedTasks = milestone.tasks?.filter((t: any) => t.status === 'done').length || 0
+                
+                return (
+                  <button
+                    key={milestone.id}
+                    onClick={() => setActiveMilestone(milestone.id)}
+                    className={`px-4 py-2 font-medium text-sm rounded-lg transition-colors whitespace-nowrap ${
+                      activeMilestone === milestone.id
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-muted hover:bg-muted/80 text-muted-foreground'
+                    }`}
+                  >
+                    {milestone.name}
+                    <span className="ml-2 text-xs opacity-80">
+                      ({completedTasks}/{totalTasks})
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )}
+        
+        {/* Mobile Task List */}
+        <div className="flex-1 overflow-y-auto">
+          {currentMilestone ? (
+            <MobileTaskList
+              tasks={currentMilestone.tasks || []}
+              milestoneId={activeMilestone}
+              teamMembers={[]} // TODO: Pass actual team members
+            />
+          ) : (
+            <div className="flex items-center justify-center h-full p-4">
+              <p className="text-muted-foreground text-center">
+                Select a milestone to view tasks
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
+  
+  // Desktop Kanban Board
   return (
     <div className="h-full flex flex-col">
-      {/* Milestone Tabs (for mobile/tablet) */}
+      {/* Milestone Tabs (for tablet without touch) */}
       {showMilestoneTabs && milestones.length > 0 && (
         <div className="border-b bg-background px-4 sm:px-6">
           <div className="flex gap-2 py-3 overflow-x-auto">

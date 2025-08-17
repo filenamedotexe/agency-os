@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/shared/lib/supabase/server"
-import { StatCard, RecentActivity } from "@/features/dashboard"
+import { StatCard, RecentActivity, ServicesWidget } from "@/features/dashboard"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/shared/components/ui/card"
 import { Button } from "@/shared/components/ui/button"
 import { Progress } from "@/shared/components/ui/progress"
@@ -48,6 +48,8 @@ export default async function AdminDashboard() {
     servicesResult,
     teamResult,
     tasksResult,
+    upcomingMilestonesResult,
+    overdueTasksResult,
   ] = await Promise.all([
     supabase
       .from("profiles")
@@ -63,6 +65,51 @@ export default async function AdminDashboard() {
     supabase
       .from("tasks")
       .select("*", { count: "exact" }),
+    // Upcoming milestones (next 30 days)
+    supabase
+      .from("milestones")
+      .select(`
+        id,
+        name,
+        due_date,
+        service:services(
+          id,
+          name,
+          client:profiles!client_id(
+            full_name
+          )
+        ),
+        tasks(
+          id,
+          status
+        )
+      `)
+      .gte('due_date', new Date().toISOString())
+      .lte('due_date', new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString())
+      .order('due_date', { ascending: true }),
+    // Overdue tasks
+    supabase
+      .from("tasks")
+      .select(`
+        id,
+        title,
+        due_date,
+        priority,
+        status,
+        milestone:milestones(
+          name,
+          service:services(
+            id,
+            name
+          )
+        ),
+        assigned_to:profiles!assigned_to(
+          full_name
+        )
+      `)
+      .lt('due_date', new Date().toISOString())
+      .neq('status', 'done')
+      .order('due_date', { ascending: true }),
   ])
 
   // Calculate metrics
@@ -157,9 +204,17 @@ export default async function AdminDashboard() {
 
         {/* Content Grid */}
         <ContentGrid columns="sidebar">
-          {/* Activity Feed */}
-          <div className="lg:col-span-4">
+          {/* Main Content */}
+          <div className="lg:col-span-4 space-y-6">
+            {/* Activity Feed */}
             <RecentActivity activities={recentActivities} />
+            
+            {/* Services Widget */}
+            <ServicesWidget 
+              upcomingMilestones={(upcomingMilestonesResult.data || []) as any}
+              overdueTasks={(overdueTasksResult.data || []) as any}
+              role="admin"
+            />
           </div>
 
           {/* Side Panels */}
