@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { ServiceCard } from './service-card'
 import { Badge } from '@/shared/components/ui/badge'
@@ -39,7 +39,7 @@ export function ServicesList({ services }: ServicesListProps) {
   const [isMobile, setIsMobile] = useState(false)
   
   // Detect mobile on mount
-  useState(() => {
+  useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768)
       setViewMode(window.innerWidth < 768 ? 'mobile' : 'grid')

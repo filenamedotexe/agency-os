@@ -4,8 +4,29 @@ import { CreateServiceButton } from './components/create-service-button'
 import { CreateServiceFromTemplate } from './components/create-service-from-template'
 import { TemplateManagementButton } from './components/template-management-button'
 import { ServiceFilters } from './components/service-filters'
+import { createClient } from '@/shared/lib/supabase/server'
+import { redirect } from 'next/navigation'
 
 export default async function ServicesPage() {
+  // Check user role for access control
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  
+  if (!user) {
+    redirect('/login')
+  }
+  
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+  
+  // Redirect clients to their dashboard
+  if (profile?.role === 'client') {
+    redirect('/client')
+  }
+  
   const result = await getServices()
   
   if ('error' in result) {
