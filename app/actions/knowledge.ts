@@ -11,9 +11,13 @@ export async function getCollections() {
   
   if (!user) return { error: 'Not authenticated', collections: [] }
   
+  // Get collections with resource counts
   const { data: collections, error } = await supabase
     .from('collections')
-    .select('*')
+    .select(`
+      *,
+      resources(count)
+    `)
     .order('created_at', { ascending: false })
   
   if (error) return { error: error.message, collections: [] }

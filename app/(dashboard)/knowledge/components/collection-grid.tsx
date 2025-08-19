@@ -48,6 +48,7 @@ interface Collection {
   visibility: string
   created_at: string
   resources?: Array<{ count: number }>
+  resource_count?: number
 }
 
 interface CollectionGridProps {
@@ -98,38 +99,21 @@ export function CollectionGrid({ collections, isAdmin = false }: CollectionGridP
   }
   
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {collections.map((collection) => {
         const Icon = iconMap[collection.icon] || Folder
-        const resourceCount = collection.resources?.[0]?.count || 0
+        const resourceCount = collection.resource_count || collection.resources?.[0]?.count || 0
         
         return (
           <Link key={collection.id} href={`/knowledge/${collection.id}`}>
-            <Card className="group hover:shadow-lg transition-shadow cursor-pointer">
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <div className={cn(
-                      "p-3 rounded-lg flex-shrink-0",
-                      colorMap[collection.color] || colorMap.blue
-                    )}>
-                      <Icon className="h-6 w-6" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <CardTitle className="line-clamp-1 text-base hover:underline">
-                        {collection.name}
-                      </CardTitle>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Badge variant="secondary" className="text-xs">
-                          {resourceCount} {resourceCount === 1 ? 'item' : 'items'}
-                        </Badge>
-                        {collection.visibility !== 'clients' && (
-                          <Badge variant="outline" className="text-xs">
-                            {collection.visibility}
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
+            <Card className="group hover:shadow-lg hover:border-primary/20 transition-all duration-200 cursor-pointer h-full">
+              <CardHeader className="pb-4">
+                <div className="flex items-start justify-between mb-3">
+                  <div className={cn(
+                    "p-3 rounded-xl flex-shrink-0 group-hover:scale-105 transition-transform",
+                    colorMap[collection.color] || colorMap.blue
+                  )}>
+                    <Icon className="h-6 w-6" />
                   </div>
                   
                   {isAdmin && (
@@ -138,7 +122,7 @@ export function CollectionGrid({ collections, isAdmin = false }: CollectionGridP
                         <Button 
                           variant="ghost" 
                           size="icon"
-                          className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8"
+                          className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 hover:bg-muted"
                           onClick={(e) => e.preventDefault()}
                         >
                           <MoreVertical className="h-4 w-4" />
@@ -151,7 +135,7 @@ export function CollectionGrid({ collections, isAdmin = false }: CollectionGridP
                             handleDelete(collection.id, collection.name)
                           }}
                           disabled={deleting === collection.id}
-                          className="text-destructive"
+                          className="text-destructive focus:text-destructive"
                         >
                           <Trash className="h-4 w-4 mr-2" />
                           Delete
@@ -160,11 +144,28 @@ export function CollectionGrid({ collections, isAdmin = false }: CollectionGridP
                     </DropdownMenu>
                   )}
                 </div>
+                
+                <div className="space-y-2">
+                  <CardTitle className="line-clamp-1 text-lg group-hover:text-primary transition-colors">
+                    {collection.name}
+                  </CardTitle>
+                  
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary" className="text-xs font-medium">
+                      {resourceCount} {resourceCount === 1 ? 'resource' : 'resources'}
+                    </Badge>
+                    {collection.visibility !== 'public' && (
+                      <Badge variant="outline" className="text-xs">
+                        {collection.visibility}
+                      </Badge>
+                    )}
+                  </div>
+                </div>
               </CardHeader>
               
               {collection.description && (
                 <CardContent className="pt-0">
-                  <CardDescription className="line-clamp-2 text-sm">
+                  <CardDescription className="line-clamp-3 text-sm leading-relaxed">
                     {collection.description}
                   </CardDescription>
                 </CardContent>
