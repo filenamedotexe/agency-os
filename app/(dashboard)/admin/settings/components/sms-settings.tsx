@@ -67,7 +67,7 @@ export function SmsSettings() {
       } else {
         throw new Error('Failed to save settings')
       }
-    } catch (error) {
+    } catch {
       toast({
         title: "Error",
         description: "Failed to save SMS settings. Please try again.",
@@ -105,7 +105,7 @@ export function SmsSettings() {
           variant: "destructive"
         })
       }
-    } catch (error) {
+    } catch {
       setConnectionStatus('error')
       toast({
         title: "Test failed",

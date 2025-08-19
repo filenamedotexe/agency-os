@@ -1,6 +1,8 @@
 import { getServices } from '@/app/actions/services'
-import { ServiceCard } from './components/service-card'
+import { ServicesList } from './components/services-list'
 import { CreateServiceButton } from './components/create-service-button'
+import { CreateServiceFromTemplate } from './components/create-service-from-template'
+import { TemplateManagementButton } from './components/template-management-button'
 import { ServiceFilters } from './components/service-filters'
 
 export default async function ServicesPage() {
@@ -28,17 +30,19 @@ export default async function ServicesPage() {
             Manage your active projects and milestones
           </p>
         </div>
-        <CreateServiceButton />
+        <div className="flex items-center gap-2">
+          <TemplateManagementButton />
+          <CreateServiceFromTemplate />
+          <CreateServiceButton />
+        </div>
       </div>
       
       {/* Filters */}
       <ServiceFilters />
       
-      {/* Services Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mt-6">
-        {services.map((service: any) => (
-          <ServiceCard key={service.id} service={service} />
-        ))}
+      {/* Services List - Responsive with Grid/Table/Mobile views */}
+      <div className="mt-6">
+        <ServicesList services={services} />
       </div>
       
       {/* Empty State */}

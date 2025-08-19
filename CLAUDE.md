@@ -1,406 +1,209 @@
 # CLAUDE.md - AgencyOS Development Guidelines
 
-## Core Development Principles
+## Project Overview
+AgencyOS is a comprehensive agency management platform built with Next.js 15, TypeScript, and Supabase. It provides role-based dashboards for admins, team members, and clients to manage services, projects, communication, and resources.
 
-### 1. NO MOCK DATA OR WORKAROUNDS
-- **ALWAYS** use real database entries
-- **NEVER** create demo/mock modes
-- **ALWAYS** address issues head-on
-- **DO NOT** move past errors until they're fixed
+## Tech Stack
+- **Frontend**: Next.js 15, React 19, TypeScript
+- **Database**: Supabase (PostgreSQL)
+- **Styling**: Tailwind CSS, shadcn/ui components
+- **Authentication**: Supabase Auth
+- **Real-time**: Supabase Realtime
+- **Email**: Resend
+- **SMS**: Twilio
+- **Testing**: Playwright
 
-### 2. RESPONSIVE DESIGN FROM START
-- **ALWAYS** test on all viewports (320px to 4K)
-- Mobile-first approach
-- Test breakpoints: 320px, 768px, 1024px, 1920px
+## Development Principles
 
-### 3. SMALL CHUNKS WITH TESTING
-- Work in ~30min-2hr chunks
-- Test after each chunk
-- Use todo list to track progress
+### 1. ALWAYS Use Real Data
+- Never use mock data or demo modes
+- Always connect to real database
+- Fix issues at their source, not with workarounds
 
-### 4. COMPREHENSIVE E2E TESTING
-- Use Playwright for real browser testing
+### 2. Mobile-First Responsive Design
+- Test on all viewports: 320px, 768px, 1024px, 1920px
+- Ensure all features work on mobile devices
+- Use responsive utilities from Tailwind
+
+### 3. Test Everything
+- Run build before committing: `npm run build`
 - Test all user roles and permissions
-- Test complete workflows end-to-end
-- Debug until 100% success rate achieved
-
-## Error Debugging Sequence
-
-### When encountering an error:
-
-1. **STOP** - Don't create workarounds
-2. **READ** - Read the full error message and stack trace
-3. **IDENTIFY** - Identify the root cause (not symptoms)
-4. **FIX** - Fix the actual issue at its source
-5. **CLEAN** - Clear cache and rebuild if needed:
-   ```bash
-   rm -rf .next
-   rm -rf node_modules/.cache
-   npm run build
-   npm run dev
-   ```
-6. **TEST** - Verify the fix works on all viewports
-7. **DOCUMENT** - Update this file if it's a new pattern
-
-### Common Error Patterns & Fixes
-
-#### "Cannot coerce the result to a single JSON object" (PGRST116)
-- **Cause**: Using `.single()` on Supabase query that returns 0 rows
-- **Fix**: Use `.maybeSingle()` instead of `.single()` when result might not exist
-- **Example**: `getOrCreateConversation` function - conversation might not exist yet
-
-#### "New row violates row-level security policy"
-- **Cause**: RLS policy too restrictive or not matching server action context
-- **Fix**: Create appropriate RLS policy that works with authenticated users
-- **Example**: `CREATE POLICY "Authenticated users can create conversations" ON conversations FOR INSERT TO authenticated WITH CHECK (auth.uid() IS NOT NULL);`
-
-#### "Hydration mismatch"
-- **Cause**: Server/client render differently (dates, random values, window checks)
-- **Fix**: Use consistent formatting utilities or `typeof window !== 'undefined'` checks
-- **Example**: Date formatting with `formatDate()` utility function
-
-#### "Module not found"
-- **Cause**: Missing dependency or wrong import path
-- **Fix**: Check package.json, run `npm install`, verify import paths start with `@/`
-
-#### "Dashboard redirect 404 errors"
-- **Cause**: Middleware and page both trying to redirect
-- **Fix**: Handle redirects in middleware only, include `/dashboard` in redirect logic
-
-## Common Issues & Solutions
-
-### Supabase Connection Issues
-```bash
-# Test API key
-curl -X GET "https://lfqnpszawjpcydobpxul.supabase.co/rest/v1/profiles?select=*&limit=1" \
-  -H "apikey: YOUR_ANON_KEY" \
-  -H "Authorization: Bearer YOUR_ANON_KEY"
-
-# If "Invalid API key" error:
-# Get correct key from: https://supabase.com/dashboard/project/lfqnpszawjpcydobpxul/settings/api
-```
-
-### RLS Policy Management
-```sql
--- Check existing policies
-SELECT schemaname, tablename, policyname, cmd, roles, qual FROM pg_policies WHERE tablename = 'table_name';
-
--- Create authenticated user policy
-CREATE POLICY "policy_name" ON table_name FOR INSERT TO authenticated WITH CHECK (auth.uid() IS NOT NULL);
-
--- Temporarily disable RLS for testing
-ALTER TABLE table_name DISABLE ROW LEVEL SECURITY;
-```
-
-### Server Restart Sequence
-```bash
-# Kill existing process
-# Clear cache
-rm -rf .next
-rm -rf node_modules/.cache
-# Rebuild
-npm run build
-# Start fresh
-npm run dev
-```
-
-### Database Testing & Management
-```bash
-# Connect to database
-psql "postgresql://postgres:agency-final@db.lfqnpszawjpcydobpxul.supabase.co:5432/postgres"
-
-# Check tables
-\dt
-
-# Test query
-SELECT * FROM profiles LIMIT 1;
-
-# Clean up old users
-DELETE FROM profiles WHERE email LIKE '%old_pattern%';
-```
+- Verify database operations work correctly
 
 ## Project Structure
 
-### Authentication Flow
-1. User hits any protected route
-2. Middleware checks auth status
-3. Redirects to /login if not authenticated
-4. After login, middleware redirects based on role:
-   - Admin → /admin
-   - Team → /team  
-   - Client → /client
-5. No server-side redirects in dashboard pages (handled by middleware)
-
-### Database Schema
-- `profiles` - Base user data (extends auth.users)
-- `client_profiles` - Extended client data
-- `services` - Projects/services
-- `milestones` - Service milestones
-- `tasks` - Milestone tasks
-- `conversations` - Message conversations
-- `messages` - Individual messages
-- `conversation_participants` - Many-to-many relationship for conversation access
-
-### Message System Architecture
-- **One conversation per client** - Enforced at database/application level
-- **Role-based access** - Admin/Team can message clients, clients see only their conversations
-- **Real-time updates** - Using Supabase realtime subscriptions
-- **File attachments** - Stored in Supabase Storage with public URLs
-- **Participant management** - Automatic addition of relevant team members
-
-## Test Accounts (Updated & Clean)
-
 ```
-All accounts use password: password123
+/app
+  /(auth)         # Public auth routes
+  /(dashboard)    # Protected dashboard routes
+    /admin        # Admin-only features
+    /team         # Team member features
+    /client       # Client portal
+    /services     # Service/project management
+    /messages     # Communication system
+    /knowledge    # Knowledge base
+  /actions        # Server actions
+  /api           # API routes
 
-Admin:    admin@demo.com         (Alex Admin)
-Team:     team@demo.com          (Taylor Team)
-Client:   sarah@acmecorp.com     (Sarah Johnson - Acme Corp)
-Client:   mike@techstartup.co    (Mike Chen - Tech Startup Co)
-Client:   lisa@retailplus.com    (Lisa Rodriguez - RetailPlus)
+/features         # Feature modules
+  /auth          # Authentication
+  /chat          # Messaging system
+  /clients       # Client management
+  /services      # Service management
+  /dashboard     # Dashboard components
+
+/shared          # Shared code
+  /components    # Reusable UI components
+  /hooks         # Custom React hooks
+  /lib           # Utilities and helpers
 ```
 
-## Development Checklist
+## Core Features
 
-### Before Starting Work
-- [ ] Server running (`npm run dev`)
-- [ ] Database connected (check with curl test above)
-- [ ] Clear any previous build artifacts if issues
+### Authentication & Authorization
+- Role-based access control (Admin, Team, Client)
+- Secure authentication with Supabase Auth
+- Automatic role-based redirects
 
-### After Making Changes
-- [ ] Test on mobile viewport (375px)
-- [ ] Test on tablet viewport (768px)
-- [ ] Test on desktop viewport (1920px)
-- [ ] Check console for errors
-- [ ] Verify database operations work
-- [ ] Run E2E tests with Playwright
+### Client Management
+- Client profiles and contact information
+- Service assignment and tracking
+- Direct messaging with clients
 
-### Before Committing
-- [ ] All TypeScript errors resolved
-- [ ] Build succeeds (`npm run build`)
-- [ ] No console errors
-- [ ] Responsive design works
-- [ ] E2E tests passing
+### Service Management
+- Project creation and tracking
+- Milestone and task management
+- Kanban board view
+- Timeline visualization
 
-## Testing Methodology
+### Communication
+- Real-time messaging system
+- File attachments
+- Email notifications via Resend
+- SMS notifications via Twilio
 
-### Playwright E2E Testing
-```bash
-# Run comprehensive tests
-node scripts/comprehensive-debug.js
-
-# Debug specific functionality
-node scripts/debug-new-conversation.js
-
-# Test message flow
-node scripts/test-message-flow.js
-```
-
-### Test Patterns
-1. **Authentication Testing** - Test all user roles
-2. **Permission Testing** - Verify role-based access
-3. **Database Operations** - Test CRUD operations
-4. **UI Interactions** - Test buttons, forms, navigation
-5. **Error Handling** - Test error scenarios
-6. **Cross-viewport** - Test on mobile/tablet/desktop
+### Knowledge Base
+- Resource collections
+- File uploads and management
+- Document organization
 
 ## Key Commands
 
 ```bash
 # Development
-npm run dev              # Start dev server
+npm run dev              # Start development server
 npm run build           # Build for production
-
-# Database
-psql $DATABASE_URL      # Connect to database
+npm run lint            # Run linter
 
 # Testing
-node scripts/comprehensive-debug.js    # Full E2E test suite
-node scripts/create-demo-users.js      # Create test users
-node scripts/create-demo-conversations.js # Create test data
+npm run test            # Run Playwright tests
+npm run test:ui         # Run tests with UI
+npm run test:debug     # Debug tests
 
-# Debugging
-rm -rf .next            # Clear Next.js cache
-npm run type-check      # Check TypeScript
+# Database Setup
+psql $DATABASE_URL      # Connect to database
+node scripts/setup-database.sql
+node scripts/create-demo-users.js
 ```
 
 ## Environment Variables
 
 Required in `.env.local`:
 ```
-NEXT_PUBLIC_SUPABASE_URL=https://lfqnpszawjpcydobpxul.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=[from dashboard]
-SUPABASE_SERVICE_ROLE_KEY=[from dashboard]
-DATABASE_URL=postgresql://postgres:agency-final@db.lfqnpszawjpcydobpxul.supabase.co:5432/postgres
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_key
+DATABASE_URL=your_database_url
+RESEND_API_KEY=your_resend_key
+TWILIO_ACCOUNT_SID=your_twilio_sid
+TWILIO_AUTH_TOKEN=your_twilio_token
+TWILIO_PHONE_NUMBER=your_twilio_phone
 ```
 
-## Code Organization Standards
+## Test Accounts
 
 ```
-/app
-  /(auth)         # Auth routes group
-  /(dashboard)    # Protected routes group
-  /actions        # Server actions
-  error.tsx       # Global error boundary
-  loading.tsx     # Global loading state
+All use password: password123
 
-/features         # Feature-based organization
-  /chat           # Message system
-    /components
-  /clients        # Client management
-    /components
-  /dashboard      # Dashboard features
-    /components
-
-/shared           # Shared utilities
-  /components/ui  # Reusable UI components
-  /hooks          # Custom React hooks
-  /lib            # Utility functions
-    constants.ts  # Routes, messages, configs
-    helpers.ts    # Utility functions
-    format-date.ts # Date formatting utilities
-    /supabase     # Database utilities
-
-/scripts          # Testing and utility scripts
-  comprehensive-debug.js
-  create-demo-users.js
-  test-*.js
-
-/types            # TypeScript definitions
-  index.ts        # All shared types
+Admin:    admin@demo.com
+Team:     team@demo.com
+Client:   sarah@acmecorp.com
 ```
 
-## Server Actions Best Practices
+## Common Patterns
 
-### Authentication Patterns
+### Server Actions
 ```typescript
 export async function serverAction() {
   const supabase = await createClient()
   
-  // Always check authentication first
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
   
   // Your logic here
+  return { data: result }
 }
 ```
 
-### Database Query Patterns
+### Database Queries
 ```typescript
-// Use .maybeSingle() when record might not exist
-const { data: existing, error } = await supabase
+// Use maybeSingle() when record might not exist
+const { data, error } = await supabase
   .from('table')
   .select('*')
   .eq('id', id)
   .maybeSingle()
 
-// Use .single() only when you're certain record exists
-const { data: record, error } = await supabase
+// Use single() only when certain
+const { data, error } = await supabase
   .from('table')
   .select('*')
   .eq('id', id)
   .single()
 ```
 
-### Error Handling Patterns
+### Error Handling
 ```typescript
-// Consistent error returns
-if (error) return { error }
-if (!data) return { error: 'Record not found' }
-
-// Client-side error handling
-const result = await serverAction()
-if (result.error) {
-  toast({
-    title: "Error",
-    description: typeof result.error === 'string' ? result.error : result.error.message,
-    variant: "destructive"
-  })
-  return
+if (error) {
+  console.error('Error:', error)
+  return { error: error.message }
 }
 ```
 
-## UI/UX Patterns
+## Troubleshooting
 
-### Date Formatting
-```typescript
-import { formatDate } from '@/shared/lib/format-date'
-
-// Consistent server/client date rendering
-<p>Joined {formatDate(user.created_at)}</p>
+### Clear Build Cache
+```bash
+rm -rf .next
+rm -rf node_modules/.cache
+npm run build
 ```
 
-### Modal Patterns
-```typescript
-// Modal with client selection
-<Dialog open={open} onOpenChange={onOpenChange}>
-  <DialogContent>
-    {/* Search functionality */}
-    {/* List with loading states */}
-    {/* Proper error handling */}
-  </DialogContent>
-</Dialog>
+### Database Connection Issues
+```bash
+# Test connection
+curl -X GET "YOUR_SUPABASE_URL/rest/v1/profiles?select=*&limit=1" \
+  -H "apikey: YOUR_ANON_KEY"
 ```
 
-### Accessibility Patterns
-```tsx
-// Always include aria-labels for buttons without text
-<Button aria-label="Send message">
-  <Send className="h-4 w-4" />
-</Button>
-
-// Stop event propagation when needed
-<Button onClick={(e) => {
-  e.stopPropagation();
-  handleAction();
-}}>
+### Check RLS Policies
+```sql
+SELECT * FROM pg_policies WHERE tablename = 'your_table';
 ```
 
-## IMPORTANT REMINDERS
+## Development Checklist
 
-1. **NO MOCK DATA** - Always use real database
-2. **FIX ERRORS IMMEDIATELY** - Don't proceed with errors
-3. **TEST EVERYTHING** - Every change needs E2E testing
-4. **STAY RESPONSIVE** - Check all viewports
-5. **CLEAN BUILDS** - When in doubt, clear cache and rebuild
-6. **REFACTOR REGULARLY** - Don't let technical debt accumulate
-7. **DOCUMENT PATTERNS** - Update this file with new solutions
-8. **USE .maybeSingle()** - When records might not exist
-9. **TEST WITH REAL DATA** - Use Playwright for comprehensive testing
-10. **VALIDATE WITH 100%** - Don't accept partial functionality
+Before committing:
+- [ ] TypeScript builds without errors
+- [ ] No console errors
+- [ ] Responsive on all viewports
+- [ ] Database operations work
+- [ ] Tests pass
 
-## Current Status - PRODUCTION READY ✅
+## Important Notes
 
-### ✅ Completed & Deployed
-- Next.js 15 with TypeScript setup
-- Supabase connection configured
-- Database schema with proper RLS policies
-- Clean test users with realistic data
-- Complete authentication flow with role-based redirects
-- Responsive navigation (mobile/desktop)
-- Role-specific dashboards (admin/team/client)
-- **COMPLETE MESSAGE SYSTEM:**
-  - Real-time conversation creation and management
-  - New message modal with client selection
-  - Message sending with file attachments
-  - One conversation per client constraint
-  - Role-based access control
-  - Client profile message buttons
-  - Proper error handling and RLS policies
-- Clients data table with search and filtering
-- Draggable column reordering
-- Error boundaries and loading states
-- Comprehensive E2E testing suite
-- Build process optimized and error-free
-
-### 🎯 System Health: 100% 
-- All builds passing
-- All E2E tests successful  
-- No console errors
-- Responsive across all viewports
-- Database operations fully functional
-- Authentication and authorization working
-- Real-time features operational
-
-### 🚀 Ready for Production Use
-The system is fully functional with professional-grade messaging, client management, and user authentication. All major features tested and verified with real database operations.
+1. **Always use absolute imports**: `@/` for imports
+2. **Never commit secrets**: Use environment variables
+3. **Test role-based access**: Verify permissions work
+4. **Keep it simple**: Don't overcomplicate solutions
+5. **Document changes**: Update this file when adding patterns

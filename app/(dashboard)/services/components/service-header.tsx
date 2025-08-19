@@ -30,6 +30,7 @@ import { formatDate } from '@/shared/lib/format-date'
 import { updateServiceStatus } from '@/app/actions/services'
 import { useToast } from '@/shared/hooks/use-toast'
 import { useState } from 'react'
+import { EditServiceDialog } from './edit-service-dialog'
 
 interface ServiceHeaderProps {
   service: any
@@ -40,6 +41,7 @@ export function ServiceHeader({ service, isClient = false }: ServiceHeaderProps)
   const router = useRouter()
   const { toast } = useToast()
   const [updating, setUpdating] = useState(false)
+  const [editDialogOpen, setEditDialogOpen] = useState(false)
   
   const statusColors = {
     planning: 'bg-gray-500',
@@ -104,7 +106,7 @@ export function ServiceHeader({ service, isClient = false }: ServiceHeaderProps)
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setEditDialogOpen(true)}>
                     <Edit className="mr-2 h-4 w-4" />
                     Edit Service
                   </DropdownMenuItem>
@@ -244,6 +246,13 @@ export function ServiceHeader({ service, isClient = false }: ServiceHeaderProps)
           </div>
         </div>
       </div>
+      
+      {/* Edit Service Dialog */}
+      <EditServiceDialog 
+        service={service}
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+      />
     </div>
   )
 }

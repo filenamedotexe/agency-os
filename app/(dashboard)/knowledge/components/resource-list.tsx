@@ -32,11 +32,10 @@ interface Resource {
 
 interface ResourceListProps {
   resources: Resource[]
-  collectionId: string
   isAdmin: boolean
 }
 
-export function ResourceList({ resources, collectionId, isAdmin }: ResourceListProps) {
+export function ResourceList({ resources, isAdmin }: ResourceListProps) {
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [loading, setLoading] = useState<string | null>(null)
   const { toast } = useToast()

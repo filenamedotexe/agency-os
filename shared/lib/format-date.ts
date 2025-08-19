@@ -1,6 +1,16 @@
-export function formatDate(date: string | Date): string {
+export function formatDate(date: string | Date | null | undefined): string {
+  // Handle null/undefined values
+  if (!date) {
+    return '';
+  }
+  
   // Ensure consistent date formatting between server and client
   const d = typeof date === 'string' ? new Date(date) : date;
+  
+  // Check if date is valid
+  if (isNaN(d.getTime())) {
+    return '';
+  }
   
   // Use ISO format to ensure consistency
   const year = d.getFullYear();
@@ -10,7 +20,12 @@ export function formatDate(date: string | Date): string {
   return `${year}-${month}-${day}`;
 }
 
-export function formatDateDisplay(date: string | Date): string {
+export function formatDateDisplay(date: string | Date | null | undefined): string {
+  // Handle null/undefined values
+  if (!date) {
+    return '';
+  }
+  
   // For display purposes, use locale formatting only on client
   if (typeof window === 'undefined') {
     // Server: return ISO format
@@ -19,5 +34,11 @@ export function formatDateDisplay(date: string | Date): string {
   
   // Client: use locale formatting
   const d = typeof date === 'string' ? new Date(date) : date;
+  
+  // Check if date is valid
+  if (isNaN(d.getTime())) {
+    return '';
+  }
+  
   return d.toLocaleDateString();
 }

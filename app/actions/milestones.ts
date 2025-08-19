@@ -30,18 +30,27 @@ export async function getMilestones(serviceId: string) {
     return errorResponse('You do not have access to this service', 'FORBIDDEN')
   }
   
-  // Get milestones with tasks
+  // Get milestones with tasks and assignee
   const { data, error } = await supabase
     .from('milestones')
     .select(`
       *,
+      assignee:profiles!assignee_id(
+        id,
+        email,
+        full_name,
+        avatar_url,
+        role
+      ),
       tasks(
         id,
         title,
         status,
         priority,
         position,
-        assigned_to:profiles!assigned_to(
+        visibility,
+        assigned_to,
+        assigned_to_profile:profiles!assigned_to(
           id,
           full_name,
           avatar_url
@@ -81,6 +90,7 @@ export async function createMilestone(data: {
   name: string
   description?: string
   due_date?: string
+  assignee_id?: string
   position?: number
 }) {
   if (!data.service_id || !data.name) {
@@ -131,6 +141,23 @@ export async function createMilestone(data: {
     }
   }
   
+  // Validate assignee if provided (must be admin or team_member)
+  if (data.assignee_id) {
+    const { data: assignee, error: assigneeError } = await serviceClient
+      .from('profiles')
+      .select('id, role')
+      .eq('id', data.assignee_id)
+      .single()
+    
+    if (assigneeError || !assignee) {
+      return errorResponse('Invalid assignee')
+    }
+    
+    if (assignee.role !== 'admin' && assignee.role !== 'team_member') {
+      return errorResponse('Milestones can only be assigned to admins or team members')
+    }
+  }
+  
   // Create the milestone
   const { data: milestone, error } = await serviceClient
     .from('milestones')
@@ -139,10 +166,20 @@ export async function createMilestone(data: {
       name: data.name,
       description: data.description,
       due_date: data.due_date,
+      assignee_id: data.assignee_id,
       position: data.position,
       status: 'upcoming'
     })
-    .select()
+    .select(`
+      *,
+      assignee:profiles!assignee_id(
+        id,
+        email,
+        full_name,
+        avatar_url,
+        role
+      )
+    `)
     .single()
   
   if (error) return errorResponse(error.message)
@@ -162,6 +199,7 @@ export async function updateMilestone(
     description?: string
     status?: 'upcoming' | 'in_progress' | 'completed' | 'delayed'
     due_date?: string
+    assignee_id?: string | null
     position?: number
   }
 ) {
@@ -219,6 +257,23 @@ export async function updateMilestone(
     }
   }
   
+  // Validate assignee if provided (must be admin or team_member)
+  if (updates.assignee_id !== undefined && updates.assignee_id !== null) {
+    const { data: assignee, error: assigneeError } = await serviceClient
+      .from('profiles')
+      .select('id, role')
+      .eq('id', updates.assignee_id)
+      .single()
+    
+    if (assigneeError || !assignee) {
+      return errorResponse('Invalid assignee')
+    }
+    
+    if (assignee.role !== 'admin' && assignee.role !== 'team_member') {
+      return errorResponse('Milestones can only be assigned to admins or team members')
+    }
+  }
+  
   // Filter out undefined values
   const cleanUpdates = Object.entries(updates).reduce((acc, [key, value]) => {
     if (value !== undefined) acc[key] = value
@@ -240,7 +295,16 @@ export async function updateMilestone(
       updated_at: new Date().toISOString()
     })
     .eq('id', milestoneId)
-    .select()
+    .select(`
+      *,
+      assignee:profiles!assignee_id(
+        id,
+        email,
+        full_name,
+        avatar_url,
+        role
+      )
+    `)
     .single()
   
   if (error) return errorResponse(error.message)

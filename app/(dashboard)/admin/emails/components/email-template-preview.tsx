@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card"
 import { Badge } from "@/shared/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs"
@@ -20,7 +20,7 @@ export function EmailTemplatePreview() {
   const [toggling, setToggling] = useState<string | null>(null)
   const { toast } = useToast()
 
-  const fetchTemplates = async () => {
+  const fetchTemplates = useCallback(async () => {
     setLoading(true)
     const { templates: data, error } = await getEmailTemplates()
     
@@ -37,11 +37,11 @@ export function EmailTemplatePreview() {
       }
     }
     setLoading(false)
-  }
+  }, [selectedTemplate, toast])
 
   useEffect(() => {
     fetchTemplates()
-  }, [])
+  }, [fetchTemplates])
 
   const handleRefresh = async () => {
     setRefreshing(true)
@@ -201,7 +201,7 @@ export function EmailTemplatePreview() {
                   <Switch
                     checked={template.is_active}
                     disabled={toggling === template.id}
-                    onCheckedChange={(checked) => {
+                    onCheckedChange={() => {
                       handleToggle(template.id, template.is_active)
                     }}
                     onClick={(e) => e.stopPropagation()}

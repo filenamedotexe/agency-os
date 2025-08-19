@@ -1,10 +1,15 @@
 "use client"
 
-import { useState, useOptimistic, startTransition } from 'react'
+import { useState, useOptimistic, startTransition, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { SwipeableListItem } from '@/shared/components/ui/swipeable-list-item'
 import { Avatar, AvatarFallback, AvatarImage } from '@/shared/components/ui/avatar'
 import { Badge } from '@/shared/components/ui/badge'
 import { Button } from '@/shared/components/ui/button'
+import { Input } from '@/shared/components/ui/input'
+import { Label } from '@/shared/components/ui/label'
+import { Textarea } from '@/shared/components/ui/textarea'
+import { AssigneeSelector } from '@/shared/components/ui/assignee-selector'
 import { 
   Sheet,
   SheetContent,
@@ -19,8 +24,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/shared/components/ui/select"
-import { updateTaskStatus, updateTask } from '@/app/actions/tasks'
+import { updateTaskStatus, updateTask, createTask } from '@/app/actions/tasks'
+import { getAssignableUsers } from '@/app/actions/assignments'
 import { formatDate } from '@/shared/lib/format-date'
+import type { Profile } from '@/shared/types'
 import { 
   CheckCircle2, 
   UserPlus,
@@ -29,7 +36,8 @@ import {
   Calendar,
   Filter,
   X,
-  Circle
+  Circle,
+  Plus
 } from 'lucide-react'
 import { useToast } from '@/shared/hooks/use-toast'
 
@@ -51,6 +59,7 @@ interface Task {
 interface MobileTaskListProps {
   tasks: Task[]
   milestoneId: string
+  serviceId: string
   teamMembers?: Array<{
     id: string
     full_name: string
@@ -62,13 +71,28 @@ interface MobileTaskListProps {
 export function MobileTaskList({ 
   tasks: initialTasks, 
   milestoneId,
+  serviceId,
   teamMembers = []
 }: MobileTaskListProps) {
+  const router = useRouter()
+  const { toast } = useToast()
   const [filter, setFilter] = useState<string>('all')
   const [assignTaskId, setAssignTaskId] = useState<string | null>(null)
   const [selectedAssignee, setSelectedAssignee] = useState<string>('')
   const [isAssigning, setIsAssigning] = useState(false)
-  const { toast } = useToast()
+  const [createSheetOpen, setCreateSheetOpen] = useState(false)
+  const [creating, setCreating] = useState(false)
+  const [loadingUsers, setLoadingUsers] = useState(false)
+  const [assignableUsers, setAssignableUsers] = useState<(Profile | any)[]>([])
+  const [createFormData, setCreateFormData] = useState({
+    title: '',
+    description: '',
+    priority: 'medium',
+    due_date: '',
+    assigned_to: null as string | null,
+    status: 'todo' as 'todo' | 'in_progress' | 'review' | 'done' | 'blocked',
+    visibility: 'internal' as 'internal' | 'client'
+  })
   
   // Use optimistic updates for immediate feedback
   const [tasks, setOptimisticTasks] = useOptimistic(
@@ -187,6 +211,95 @@ export function MobileTaskList({
     review: 'bg-yellow-100 text-yellow-700',
     done: 'bg-green-100 text-green-700',
     blocked: 'bg-red-100 text-red-700'
+  }
+  
+  // Load assignable users when create sheet opens
+  useEffect(() => {
+    if (createSheetOpen && assignableUsers.length === 0) {
+      loadAssignableUsers()
+    }
+  }, [createSheetOpen])
+  
+  const loadAssignableUsers = async () => {
+    setLoadingUsers(true)
+    try {
+      const result = await getAssignableUsers(serviceId, true)
+      if ('error' in result) {
+        throw new Error(result.error)
+      }
+      setAssignableUsers(result.data || [])
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to load assignable users",
+        variant: "destructive"
+      })
+    } finally {
+      setLoadingUsers(false)
+    }
+  }
+  
+  const handleCreateTask = async () => {
+    if (!createFormData.title) {
+      toast({
+        title: "Error",
+        description: "Task title is required",
+        variant: "destructive"
+      })
+      return
+    }
+    
+    setCreating(true)
+    try {
+      // Auto-set visibility if assigning to client
+      let visibility = createFormData.visibility
+      if (createFormData.assigned_to) {
+        const assignee = assignableUsers.find(u => u.id === createFormData.assigned_to)
+        if (assignee?.role === 'client') {
+          visibility = 'client'
+        }
+      }
+      
+      const result = await createTask({
+        milestone_id: milestoneId,
+        title: createFormData.title,
+        description: createFormData.description || undefined,
+        priority: createFormData.priority as any,
+        due_date: createFormData.due_date || undefined,
+        status: createFormData.status,
+        assigned_to: createFormData.assigned_to,
+        visibility: visibility
+      })
+      
+      if ('error' in result) {
+        throw new Error(result.error)
+      }
+      
+      toast({
+        title: "Success",
+        description: "Task created successfully",
+      })
+      
+      setCreateSheetOpen(false)
+      setCreateFormData({
+        title: '',
+        description: '',
+        priority: 'medium',
+        due_date: '',
+        assigned_to: null,
+        status: 'todo',
+        visibility: 'internal'
+      })
+      router.refresh()
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to create task",
+        variant: "destructive"
+      })
+    } finally {
+      setCreating(false)
+    }
   }
   
   return (
@@ -405,6 +518,134 @@ export function MobileTaskList({
           </div>
         </SheetContent>
       </Sheet>
+      
+      {/* Create Task Sheet */}
+      <Sheet open={createSheetOpen} onOpenChange={setCreateSheetOpen}>
+        <SheetContent side="bottom" className="h-[85vh] overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>Create New Task</SheetTitle>
+            <SheetDescription>
+              Add a new task to this milestone
+            </SheetDescription>
+          </SheetHeader>
+          
+          <div className="mt-6 space-y-4">
+            <div className="grid gap-2">
+              <Label htmlFor="mobile-title">Title *</Label>
+              <Input
+                id="mobile-title"
+                value={createFormData.title}
+                onChange={(e) => setCreateFormData({ ...createFormData, title: e.target.value })}
+                placeholder="e.g., Design homepage mockup"
+                required
+              />
+            </div>
+            
+            <div className="grid gap-2">
+              <Label htmlFor="mobile-description">Description</Label>
+              <Textarea
+                id="mobile-description"
+                value={createFormData.description}
+                onChange={(e) => setCreateFormData({ ...createFormData, description: e.target.value })}
+                placeholder="Task details..."
+                rows={3}
+              />
+            </div>
+            
+            <div className="grid gap-2">
+              <Label htmlFor="mobile-status">Status</Label>
+              <Select
+                value={createFormData.status}
+                onValueChange={(value: any) => setCreateFormData({ ...createFormData, status: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todo">To Do</SelectItem>
+                  <SelectItem value="in_progress">In Progress</SelectItem>
+                  <SelectItem value="review">Review</SelectItem>
+                  <SelectItem value="done">Done</SelectItem>
+                  <SelectItem value="blocked">Blocked</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="grid gap-2">
+              <Label htmlFor="mobile-priority">Priority</Label>
+              <Select
+                value={createFormData.priority}
+                onValueChange={(value) => setCreateFormData({ ...createFormData, priority: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="low">Low</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="high">High</SelectItem>
+                  <SelectItem value="urgent">Urgent</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="grid gap-2">
+              <Label htmlFor="mobile-due-date">Due Date</Label>
+              <Input
+                id="mobile-due-date"
+                type="datetime-local"
+                value={createFormData.due_date}
+                onChange={(e) => setCreateFormData({ ...createFormData, due_date: e.target.value })}
+              />
+            </div>
+            
+            <div className="grid gap-2">
+              <Label htmlFor="mobile-assignee">Assignee</Label>
+              <AssigneeSelector
+                value={createFormData.assigned_to}
+                onChange={(userId) => setCreateFormData({ ...createFormData, assigned_to: userId })}
+                users={assignableUsers}
+                allowClient={true}
+                placeholder="Select assignee (optional)..."
+                loading={loadingUsers}
+                disabled={creating}
+              />
+              {createFormData.assigned_to && assignableUsers.find(u => u.id === createFormData.assigned_to)?.role === 'client' && (
+                <p className="text-xs text-muted-foreground">
+                  Task will be visible to the client
+                </p>
+              )}
+            </div>
+            
+            <div className="flex gap-2 pt-4">
+              <Button
+                variant="outline"
+                onClick={() => setCreateSheetOpen(false)}
+                disabled={creating}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleCreateTask}
+                disabled={creating}
+                className="flex-1"
+              >
+                {creating ? 'Creating...' : 'Create Task'}
+              </Button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+      
+      {/* Floating Action Button */}
+      <Button
+        onClick={() => setCreateSheetOpen(true)}
+        className="fixed bottom-20 right-4 h-14 w-14 rounded-full shadow-lg z-10"
+        size="icon"
+      >
+        <Plus className="h-6 w-6" />
+      </Button>
     </>
   )
 }

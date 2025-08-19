@@ -25,7 +25,11 @@ import {
   TrendingUp,
   Users,
   MessageSquare,
+  ListTodo,
+  AlertCircle,
+  Circle,
 } from "lucide-react"
+import Link from "next/link"
 
 export default async function ClientDashboard() {
   const supabase = await createClient()
@@ -56,6 +60,24 @@ export default async function ClientDashboard() {
     `)
     .eq("client_id", user.id)
     .order("created_at", { ascending: false })
+  
+  // Fetch tasks assigned to the client
+  const { data: assignedTasks } = await supabase
+    .from("tasks")
+    .select(`
+      *,
+      milestone:milestones!inner(
+        id,
+        name,
+        service:services!inner(
+          id,
+          name: project_name,
+          client_id
+        )
+      )
+    `)
+    .or(`assigned_to.eq.${user.id},and(visibility.eq.client,milestone.service.client_id.eq.${user.id})`)
+    .order("due_date", { ascending: true })
 
   // Map to correct Service type structure
   const myServices = services?.map(service => ({
@@ -73,6 +95,13 @@ export default async function ClientDashboard() {
     (sum, service) => sum + (parseFloat(service.budget) || 0),
     0
   ) || 0
+  
+  // Calculate task metrics
+  const totalTasks = assignedTasks?.length || 0
+  const todoTasks = assignedTasks?.filter(t => t.status === 'todo').length || 0
+  const inProgressTasks = assignedTasks?.filter(t => t.status === 'in_progress').length || 0
+  const completedTasks = assignedTasks?.filter(t => t.status === 'done').length || 0
+  const blockedTasks = assignedTasks?.filter(t => t.status === 'blocked').length || 0
 
   // Get overall progress across all services  
   const calculateServiceProgress = (service: ServiceWithMilestones) => {
@@ -82,7 +111,7 @@ export default async function ClientDashboard() {
     ) || 0
     
     const completedTasks = service.milestones?.reduce(
-      (sum: number, m: MilestoneWithTasks) => sum + (m.tasks?.filter((t: Task) => t.status === "completed").length || 0),
+      (sum: number, m: MilestoneWithTasks) => sum + (m.tasks?.filter((t: Task) => t.status === "done").length || 0),
       0
     ) || 0
     
@@ -179,6 +208,89 @@ export default async function ClientDashboard() {
       <ContentGrid columns="sidebar">
         {/* Services Overview - Main content */}
         <div className="lg:col-span-4 space-y-6">
+          {/* My Tasks Widget */}
+          {totalTasks > 0 && (
+            <Card>
+              <CardHeader className="space-y-1">
+                <div className={ds.layout.flex.between}>
+                  <div>
+                    <CardTitle>My Tasks</CardTitle>
+                    <CardDescription>Tasks assigned to you across all services</CardDescription>
+                  </div>
+                  <ListTodo className="h-5 w-5 text-muted-foreground" />
+                </div>
+              </CardHeader>
+              <CardContent className="p-4 sm:p-6">
+                {/* Task Status Summary */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+                  <div className="flex items-center gap-2 p-2 rounded-lg bg-gray-50">
+                    <Circle className="h-4 w-4 text-gray-500" />
+                    <div>
+                      <p className="text-sm font-medium">{todoTasks}</p>
+                      <p className="text-xs text-muted-foreground">To Do</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 p-2 rounded-lg bg-blue-50">
+                    <Clock className="h-4 w-4 text-blue-500" />
+                    <div>
+                      <p className="text-sm font-medium">{inProgressTasks}</p>
+                      <p className="text-xs text-muted-foreground">In Progress</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 p-2 rounded-lg bg-green-50">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    <div>
+                      <p className="text-sm font-medium">{completedTasks}</p>
+                      <p className="text-xs text-muted-foreground">Done</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 p-2 rounded-lg bg-red-50">
+                    <AlertCircle className="h-4 w-4 text-red-500" />
+                    <div>
+                      <p className="text-sm font-medium">{blockedTasks}</p>
+                      <p className="text-xs text-muted-foreground">Blocked</p>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Recent Tasks List */}
+                <div className="space-y-2">
+                  <p className="text-sm font-medium mb-2">Recent Tasks</p>
+                  {assignedTasks?.slice(0, 5).map((task) => (
+                    <div key={task.id} className="flex items-start gap-2 p-2 rounded-lg hover:bg-muted/50 transition-colors">
+                      <div className={`
+                        w-2 h-2 rounded-full mt-1.5 flex-shrink-0
+                        ${task.status === 'done' ? 'bg-green-500' :
+                          task.status === 'in_progress' ? 'bg-blue-500' :
+                          task.status === 'blocked' ? 'bg-red-500' :
+                          'bg-gray-300'}
+                      `} />
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-sm ${task.status === 'done' ? 'line-through text-muted-foreground' : ''}`}>
+                          {task.title}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          in {task.milestone?.service?.name || 'Unknown Service'}
+                        </p>
+                      </div>
+                      {task.status === 'done' && (
+                        <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
+                      )}
+                    </div>
+                  ))}
+                </div>
+                
+                {totalTasks > 5 && (
+                  <div className="pt-3 mt-3 border-t">
+                    <Link href="/client/tasks" className="text-sm text-primary hover:underline">
+                      View all {totalTasks} tasks →
+                    </Link>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+          
           {/* Active Services */}
           <Card>
             <CardHeader className="space-y-1">

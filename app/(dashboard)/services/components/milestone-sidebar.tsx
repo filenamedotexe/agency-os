@@ -6,6 +6,7 @@ import { Button } from '@/shared/components/ui/button'
 import { Progress } from '@/shared/components/ui/progress'
 import { Badge } from '@/shared/components/ui/badge'
 import { Card } from '@/shared/components/ui/card'
+import { AssigneeAvatar } from '@/shared/components/ui/assignee-avatar'
 import { 
   Plus, 
   Calendar, 
@@ -15,11 +16,13 @@ import {
   ChevronRight,
   Edit,
   Trash2,
-  GripVertical
+  GripVertical,
+  User
 } from 'lucide-react'
 import { formatDate } from '@/shared/lib/format-date'
 import { createMilestone, updateMilestoneStatus, deleteMilestone } from '@/app/actions/milestones'
 import { useToast } from '@/shared/hooks/use-toast'
+import { useServiceContext } from '@/shared/contexts/service-context'
 import {
   Dialog,
   DialogContent,
@@ -33,15 +36,17 @@ import { Input } from '@/shared/components/ui/input'
 import { Label } from '@/shared/components/ui/label'
 import { Textarea } from '@/shared/components/ui/textarea'
 
-interface MilestoneSidebarProps {
-  milestones: any[]
-  serviceId: string
-}
-
-export function MilestoneSidebar({ milestones = [], serviceId }: MilestoneSidebarProps) {
+export function MilestoneSidebar() {
   const router = useRouter()
   const { toast } = useToast()
-  const [selectedMilestone, setSelectedMilestone] = useState<string | null>(milestones[0]?.id || null)
+  const { 
+    selectedMilestoneId, 
+    setSelectedMilestoneId, 
+    milestones, 
+    serviceId,
+    setEditingMilestone,
+    setIsEditMilestoneOpen 
+  } = useServiceContext()
   const [createModalOpen, setCreateModalOpen] = useState(false)
   const [creating, setCreating] = useState(false)
   const [formData, setFormData] = useState({
@@ -151,8 +156,8 @@ export function MilestoneSidebar({ milestones = [], serviceId }: MilestoneSideba
     }
   }
   
-  // Sort milestones by position
-  const sortedMilestones = [...milestones].sort((a, b) => a.position - b.position)
+  // Sort milestones by position (handling null values)
+  const sortedMilestones = [...milestones].sort((a, b) => (a.position || 0) - (b.position || 0))
   
   return (
     <div className="p-4 space-y-4">
@@ -244,9 +249,9 @@ export function MilestoneSidebar({ milestones = [], serviceId }: MilestoneSideba
               <Card
                 key={milestone.id}
                 className={`p-4 cursor-pointer transition-all hover:shadow-md ${
-                  selectedMilestone === milestone.id ? 'ring-2 ring-primary' : ''
+                  selectedMilestoneId === milestone.id ? 'ring-2 ring-primary' : ''
                 }`}
-                onClick={() => setSelectedMilestone(milestone.id)}
+                onClick={() => setSelectedMilestoneId(milestone.id)}
               >
                 {/* Milestone Header */}
                 <div className="flex items-start justify-between mb-3">
@@ -281,6 +286,19 @@ export function MilestoneSidebar({ milestones = [], serviceId }: MilestoneSideba
                   </div>
                 )}
                 
+                {/* Milestone Assignee */}
+                {(milestone.assignee_profile || milestone.assignee) && (
+                  <div className="mb-3 flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">Assignee:</span>
+                    <AssigneeAvatar
+                      user={milestone.assignee_profile || milestone.assignee}
+                      size="sm"
+                      showName={true}
+                      showTooltip={false}
+                    />
+                  </div>
+                )}
+                
                 {/* Meta Info */}
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
                   {milestone.due_date && (
@@ -298,7 +316,8 @@ export function MilestoneSidebar({ milestones = [], serviceId }: MilestoneSideba
                       className="h-6 w-6 p-0"
                       onClick={(e) => {
                         e.stopPropagation()
-                        // Edit milestone
+                        setEditingMilestone(milestone)
+                        setIsEditMilestoneOpen(true)
                       }}
                     >
                       <Edit className="h-3 w-3" />

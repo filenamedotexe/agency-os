@@ -88,7 +88,7 @@ function SortableTaskCard({ task }: { task: any }) {
 
   return (
     <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-      <TaskCard task={task} />
+      <TaskCard task={task} serviceId="" />
     </div>
   )
 }

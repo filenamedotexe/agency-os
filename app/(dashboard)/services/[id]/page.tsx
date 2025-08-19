@@ -1,7 +1,6 @@
 import { getService } from '@/app/actions/services'
 import { ServiceHeader } from '../components/service-header'
-import { MilestoneSidebar } from '../components/milestone-sidebar'
-import { KanbanBoard } from '../components/kanban-board'
+import { ServiceDetailContent } from '../components/service-detail-content'
 import { ClientTimeline } from '../components/client-timeline'
 import { createClient } from '@/shared/lib/supabase/server'
 
@@ -44,7 +43,7 @@ export default async function ServiceDetailPage({
   const { data: { user } } = await supabase.auth.getUser()
   const { data: profile } = await supabase
     .from('profiles')
-    .select('role')
+    .select('id, role')
     .eq('id', user?.id)
     .single()
   
@@ -58,7 +57,7 @@ export default async function ServiceDetailPage({
         <ServiceHeader service={service} isClient={true} />
         
         {/* Client Timeline View */}
-        <ClientTimeline service={service} />
+        <ClientTimeline service={service} userId={profile?.id} />
       </div>
     )
   }
@@ -71,32 +70,21 @@ export default async function ServiceDetailPage({
       
       {/* Split Panel Layout - Desktop */}
       <div className="hidden lg:flex flex-1 overflow-hidden">
-        {/* Left: Milestones Sidebar */}
-        <div className="w-80 border-r bg-muted/5 overflow-y-auto">
-          <MilestoneSidebar 
-            milestones={service.milestones || []}
-            serviceId={service.id}
-          />
-        </div>
-        
-        {/* Right: Kanban Board */}
-        <div className="flex-1 overflow-hidden">
-          <KanbanBoard 
-            milestones={service.milestones || []}
-            serviceId={service.id}
-          />
-        </div>
+        <ServiceDetailContent 
+          milestones={service.milestones || []}
+          serviceId={service.id}
+          isDesktop={true}
+        />
       </div>
       
       {/* Mobile/Tablet Layout */}
       <div className="flex lg:hidden flex-1 overflow-hidden">
-        <div className="flex-1 overflow-hidden">
-          <KanbanBoard 
-            milestones={service.milestones || []}
-            serviceId={service.id}
-            showMilestoneTabs={true}
-          />
-        </div>
+        <ServiceDetailContent 
+          milestones={service.milestones || []}
+          serviceId={service.id}
+          showMilestoneTabs={true}
+          isDesktop={false}
+        />
       </div>
     </div>
   )

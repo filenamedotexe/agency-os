@@ -211,8 +211,8 @@ export default async function AdminDashboard() {
             
             {/* Services Widget */}
             <ServicesWidget 
-              upcomingMilestones={(upcomingMilestonesResult.data || []) as any}
-              overdueTasks={(overdueTasksResult.data || []) as any}
+              upcomingMilestones={upcomingMilestonesResult.data || []}
+              overdueTasks={overdueTasksResult.data || []}
               role="admin"
             />
           </div>

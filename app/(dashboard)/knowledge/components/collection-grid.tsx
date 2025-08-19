@@ -17,8 +17,7 @@ import {
   Video, 
   Link as LinkIcon,
   MoreVertical,
-  Trash,
-  Eye
+  Trash
 } from 'lucide-react'
 import { cn } from '@/shared/lib/utils'
 import { deleteCollection } from '@/app/actions/knowledge'

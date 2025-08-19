@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useDroppable } from '@dnd-kit/core'
 import {
@@ -10,9 +10,12 @@ import {
 import { TaskCard } from './task-card'
 import { Button } from '@/shared/components/ui/button'
 import { Badge } from '@/shared/components/ui/badge'
+import { AssigneeSelector } from '@/shared/components/ui/assignee-selector'
 import { Plus, MoreVertical } from 'lucide-react'
 import { createTask } from '@/app/actions/tasks'
+import { getAssignableUsers } from '@/app/actions/assignments'
 import { useToast } from '@/shared/hooks/use-toast'
+import type { Profile } from '@/shared/types'
 import {
   Dialog,
   DialogContent,
@@ -49,9 +52,10 @@ interface TaskColumnProps {
     position: number
   }>
   milestoneId: string
+  serviceId: string
 }
 
-export function TaskColumn({ status, tasks, milestoneId }: TaskColumnProps) {
+export function TaskColumn({ status, tasks, milestoneId, serviceId }: TaskColumnProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: status.id,
   })
@@ -59,11 +63,15 @@ export function TaskColumn({ status, tasks, milestoneId }: TaskColumnProps) {
   const { toast } = useToast()
   const [createModalOpen, setCreateModalOpen] = useState(false)
   const [creating, setCreating] = useState(false)
+  const [loadingUsers, setLoadingUsers] = useState(false)
+  const [assignableUsers, setAssignableUsers] = useState<(Profile | any)[]>([])
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     priority: 'medium',
-    due_date: ''
+    due_date: '',
+    assigned_to: null as string | null,
+    visibility: 'internal' as 'internal' | 'client'
   })
   
   const columnColors = {
@@ -82,6 +90,32 @@ export function TaskColumn({ status, tasks, milestoneId }: TaskColumnProps) {
     red: 'bg-red-500'
   }
   
+  // Load assignable users when modal opens
+  useEffect(() => {
+    if (createModalOpen && assignableUsers.length === 0) {
+      loadAssignableUsers()
+    }
+  }, [createModalOpen])
+  
+  const loadAssignableUsers = async () => {
+    setLoadingUsers(true)
+    try {
+      const result = await getAssignableUsers(serviceId, true)
+      if ('error' in result) {
+        throw new Error(result.error)
+      }
+      setAssignableUsers(result.data || [])
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to load assignable users",
+        variant: "destructive"
+      })
+    } finally {
+      setLoadingUsers(false)
+    }
+  }
+  
   const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!formData.title) {
@@ -95,13 +129,24 @@ export function TaskColumn({ status, tasks, milestoneId }: TaskColumnProps) {
     
     setCreating(true)
     try {
+      // Auto-set visibility if assigning to client
+      let visibility = formData.visibility
+      if (formData.assigned_to) {
+        const assignee = assignableUsers.find(u => u.id === formData.assigned_to)
+        if (assignee?.role === 'client') {
+          visibility = 'client'
+        }
+      }
+      
       const result = await createTask({
         milestone_id: milestoneId,
         title: formData.title,
         description: formData.description || undefined,
         priority: formData.priority as 'low' | 'medium' | 'high' | 'urgent',
         due_date: formData.due_date || undefined,
-        status: status.id as 'todo' | 'in_progress' | 'review' | 'done' | 'blocked'
+        status: status.id as 'todo' | 'in_progress' | 'review' | 'done' | 'blocked',
+        assigned_to: formData.assigned_to,
+        visibility: visibility
       })
       
       if ('error' in result) {
@@ -118,7 +163,9 @@ export function TaskColumn({ status, tasks, milestoneId }: TaskColumnProps) {
         title: '',
         description: '',
         priority: 'medium',
-        due_date: ''
+        due_date: '',
+        assigned_to: null,
+        visibility: 'internal'
       })
       router.refresh()
     } catch (error) {
@@ -224,6 +271,24 @@ export function TaskColumn({ status, tasks, milestoneId }: TaskColumnProps) {
                         />
                       </div>
                     </div>
+                    
+                    <div className="grid gap-2">
+                      <Label htmlFor="assignee">Assignee</Label>
+                      <AssigneeSelector
+                        value={formData.assigned_to}
+                        onChange={(userId) => setFormData({ ...formData, assigned_to: userId })}
+                        users={assignableUsers}
+                        allowClient={true}
+                        placeholder="Select assignee (optional)..."
+                        loading={loadingUsers}
+                        disabled={creating}
+                      />
+                      {formData.assigned_to && assignableUsers.find(u => u.id === formData.assigned_to)?.role === 'client' && (
+                        <p className="text-xs text-muted-foreground">
+                          Task will be visible to the client
+                        </p>
+                      )}
+                    </div>
                   </div>
                   
                   <DialogFooter>
@@ -264,7 +329,7 @@ export function TaskColumn({ status, tasks, milestoneId }: TaskColumnProps) {
               </div>
             ) : (
               tasks.map((task) => (
-                <TaskCard key={task.id} task={task} />
+                <TaskCard key={task.id} task={task} serviceId={serviceId} />
               ))
             )}
           </div>

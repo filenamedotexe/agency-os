@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createService } from '@/app/actions/services'
 import { Button } from '@/shared/components/ui/button'
@@ -30,7 +30,7 @@ import { createClient } from '@/shared/lib/supabase/client'
 export function CreateServiceButton() {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [clients, setClients] = useState<any[]>([])
+  const [clients, setClients] = useState<Array<{id: string, full_name?: string, email: string, company?: string}>>([])
   const [searchTerm, setSearchTerm] = useState('')
   const [loadingClients, setLoadingClients] = useState(true)
   const router = useRouter()
@@ -47,14 +47,7 @@ export function CreateServiceButton() {
     color: 'blue'
   })
   
-  // Load clients when dialog opens
-  useEffect(() => {
-    if (open) {
-      loadClients()
-    }
-  }, [open])
-  
-  const loadClients = async () => {
+  const loadClients = useCallback(async () => {
     setLoadingClients(true)
     try {
       const supabase = createClient()
@@ -94,7 +87,14 @@ export function CreateServiceButton() {
     } finally {
       setLoadingClients(false)
     }
-  }
+  }, [toast])
+  
+  // Load clients when dialog opens
+  useEffect(() => {
+    if (open) {
+      loadClients()
+    }
+  }, [open, loadClients])
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

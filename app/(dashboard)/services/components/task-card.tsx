@@ -1,13 +1,14 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { Card } from '@/shared/components/ui/card'
 import { Badge } from '@/shared/components/ui/badge'
 import { Button } from '@/shared/components/ui/button'
-import { Avatar, AvatarFallback, AvatarImage } from '@/shared/components/ui/avatar'
+import { AssigneeAvatar } from '@/shared/components/ui/assignee-avatar'
+import { AssigneeSelector } from '@/shared/components/ui/assignee-selector'
 import { 
   Calendar, 
   MessageSquare, 
@@ -17,7 +18,9 @@ import {
   Clock,
   Edit,
   Trash2,
-  User
+  User,
+  Eye,
+  EyeOff
 } from 'lucide-react'
 import {
   DropdownMenu,
@@ -26,8 +29,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/shared/components/ui/dropdown-menu'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/shared/components/ui/popover'
 import { formatDate } from '@/shared/lib/format-date'
-import { deleteTask, updateTask } from '@/app/actions/tasks'
+import { deleteTask, updateTask, assignTask } from '@/app/actions/tasks'
+import { getAssignableUsers } from '@/app/actions/assignments'
 import { useToast } from '@/shared/hooks/use-toast'
 import {
   Dialog,
@@ -47,13 +56,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/shared/components/ui/select'
+import type { Profile } from '@/shared/types'
 
 interface TaskCardProps {
   task: any
   isDragging?: boolean
+  serviceId: string
 }
 
-export function TaskCard({ task, isDragging = false }: TaskCardProps) {
+export function TaskCard({ task, isDragging = false, serviceId }: TaskCardProps) {
   const {
     attributes,
     listeners,
@@ -67,6 +78,10 @@ export function TaskCard({ task, isDragging = false }: TaskCardProps) {
   const { toast } = useToast()
   const [editModalOpen, setEditModalOpen] = useState(false)
   const [updating, setUpdating] = useState(false)
+  const [assigneePopoverOpen, setAssigneePopoverOpen] = useState(false)
+  const [assignableUsers, setAssignableUsers] = useState<(Profile | any)[]>([])
+  const [loadingUsers, setLoadingUsers] = useState(false)
+  const [assigning, setAssigning] = useState(false)
   const [formData, setFormData] = useState({
     title: task.title,
     description: task.description || '',
@@ -94,6 +109,67 @@ export function TaskCard({ task, isDragging = false }: TaskCardProps) {
   }
   
   const PriorityIcon = priorityIcons[task.priority as keyof typeof priorityIcons]
+  
+  // Load assignable users when popover opens
+  useEffect(() => {
+    if (assigneePopoverOpen && assignableUsers.length === 0) {
+      loadAssignableUsers()
+    }
+  }, [assigneePopoverOpen])
+  
+  const loadAssignableUsers = async () => {
+    setLoadingUsers(true)
+    try {
+      const result = await getAssignableUsers(serviceId, true)
+      if ('error' in result) {
+        throw new Error(result.error)
+      }
+      setAssignableUsers(result.data || [])
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to load assignable users",
+        variant: "destructive"
+      })
+    } finally {
+      setLoadingUsers(false)
+    }
+  }
+  
+  const handleAssignment = async (userId: string | null) => {
+    setAssigning(true)
+    try {
+      // Determine visibility based on assignee role
+      let visibility: 'internal' | 'client' | undefined
+      if (userId) {
+        const assignee = assignableUsers.find(u => u.id === userId)
+        if (assignee?.role === 'client') {
+          visibility = 'client'
+        }
+      }
+      
+      const result = await assignTask(task.id, userId, visibility)
+      if ('error' in result) {
+        throw new Error(result.error)
+      }
+      
+      toast({
+        title: "Success",
+        description: userId ? "Task assigned successfully" : "Assignment removed",
+      })
+      
+      setAssigneePopoverOpen(false)
+      router.refresh()
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to assign task",
+        variant: "destructive"
+      })
+    } finally {
+      setAssigning(false)
+    }
+  }
   
   const handleDelete = async () => {
     if (!confirm(`Are you sure you want to delete "${task.title}"?`)) {
@@ -243,19 +319,46 @@ export function TaskCard({ task, isDragging = false }: TaskCardProps) {
                 </div>
               )}
               
-              {/* Assignee */}
-              {task.assigned_to ? (
-                <Avatar className="h-6 w-6">
-                  <AvatarImage src={task.assigned_to.avatar_url} />
-                  <AvatarFallback className="text-xs">
-                    {task.assigned_to.full_name?.charAt(0) || 'U'}
-                  </AvatarFallback>
-                </Avatar>
-              ) : (
-                <div className="h-6 w-6 rounded-full border-2 border-dashed border-muted-foreground/30 flex items-center justify-center">
-                  <User className="h-3 w-3 text-muted-foreground/50" />
+              {/* Task Visibility Indicator */}
+              {task.visibility === 'client' && (
+                <div className="flex items-center" title="Visible to client">
+                  <Eye className="h-3 w-3 text-muted-foreground" />
                 </div>
               )}
+              
+              {/* Assignee with Click to Assign */}
+              <Popover open={assigneePopoverOpen} onOpenChange={setAssigneePopoverOpen}>
+                <PopoverTrigger asChild>
+                  <div className="cursor-pointer">
+                    <AssigneeAvatar
+                      user={task.assigned_to_profile || task.assigned_to}
+                      size="sm"
+                      editable={true}
+                      showTooltip={true}
+                    />
+                  </div>
+                </PopoverTrigger>
+                <PopoverContent className="w-80 p-0">
+                  <div className="p-3">
+                    <h4 className="font-medium text-sm mb-3">Assign Task</h4>
+                    <AssigneeSelector
+                      value={task.assigned_to}
+                      onChange={handleAssignment}
+                      users={assignableUsers}
+                      allowClient={true}
+                      placeholder="Select assignee..."
+                      loading={loadingUsers}
+                      disabled={assigning}
+                    />
+                    {task.visibility === 'client' && (
+                      <p className="text-xs text-muted-foreground mt-2">
+                        <Eye className="inline h-3 w-3 mr-1" />
+                        This task is visible to the client
+                      </p>
+                    )}
+                  </div>
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
         </Card>

@@ -101,6 +101,7 @@ export async function createTask(data: {
   priority?: 'low' | 'medium' | 'high' | 'urgent'
   due_date?: string
   status?: 'todo' | 'in_progress' | 'review' | 'done' | 'blocked'
+  visibility?: 'internal' | 'client'
 }) {
   if (!data.milestone_id || !data.title) {
     return errorResponse('Milestone ID and task title are required')
@@ -125,6 +126,20 @@ export async function createTask(data: {
     ? existingTasks[0].position + 1
     : 0
   
+  // Determine visibility based on assignee if not explicitly set
+  let visibility = data.visibility || 'internal'
+  if (data.assigned_to && !data.visibility) {
+    const { data: assignee } = await serviceClient
+      .from('profiles')
+      .select('role')
+      .eq('id', data.assigned_to)
+      .single()
+    
+    if (assignee?.role === 'client') {
+      visibility = 'client'
+    }
+  }
+  
   // Create the task
   const { data: task, error } = await serviceClient
     .from('tasks')
@@ -137,6 +152,7 @@ export async function createTask(data: {
       due_date: data.due_date,
       status: targetStatus,
       position: nextPosition,
+      visibility: visibility,
       created_by: user.id
     })
     .select(`
@@ -182,6 +198,7 @@ export async function updateTask(
     priority?: 'low' | 'medium' | 'high' | 'urgent'
     due_date?: string | null
     status?: 'todo' | 'in_progress' | 'review' | 'done' | 'blocked'
+    visibility?: 'internal' | 'client'
   }
 ) {
   if (!taskId) return errorResponse('Task ID is required')
@@ -216,6 +233,19 @@ export async function updateTask(
     if (value !== undefined) acc[key] = value
     return acc
   }, {} as Record<string, unknown>)
+  
+  // Auto-adjust visibility if assigning to client
+  if (updates.assigned_to && !updates.visibility) {
+    const { data: assignee } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', updates.assigned_to)
+      .single()
+    
+    if (assignee?.role === 'client') {
+      cleanUpdates.visibility = 'client'
+    }
+  }
   
   // Handle status change - need to update positions
   if (updates.status && updates.status !== currentTask.status) {
@@ -742,4 +772,189 @@ export async function getTaskStats(milestoneId?: string) {
   }
   
   return successResponse(stats, 'Task stats retrieved')
+}
+
+// =====================================================
+// ASSIGN TASK TO USER
+// =====================================================
+export async function assignTask(
+  taskId: string,
+  assigneeId: string | null,
+  visibility?: 'internal' | 'client'
+) {
+  if (!taskId) return errorResponse('Task ID is required')
+  
+  const auth = await requireAuth(['admin', 'team_member'])
+  if (isAuthError(auth)) return errorResponse(auth.error)
+  
+  const { supabase, user } = auth
+  
+  // Get current task info
+  const { data: currentTask, error: fetchError } = await supabase
+    .from('tasks')
+    .select(`
+      *,
+      milestone:milestones!inner(
+        service_id
+      )
+    `)
+    .eq('id', taskId)
+    .single()
+  
+  if (fetchError || !currentTask) {
+    return errorResponse('Task not found')
+  }
+  
+  // Prepare update
+  const updates: Record<string, any> = {
+    assigned_to: assigneeId,
+    updated_at: new Date().toISOString()
+  }
+  
+  // Determine visibility
+  if (visibility !== undefined) {
+    updates.visibility = visibility
+  } else if (assigneeId) {
+    // Auto-set visibility based on assignee role
+    const { data: assignee } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', assigneeId)
+      .single()
+    
+    if (assignee?.role === 'client') {
+      updates.visibility = 'client'
+    } else {
+      updates.visibility = 'internal'
+    }
+  } else {
+    // No assignee, default to internal
+    updates.visibility = 'internal'
+  }
+  
+  // Update the task
+  const { data, error } = await supabase
+    .from('tasks')
+    .update(updates)
+    .eq('id', taskId)
+    .select(`
+      *,
+      assigned_to_profile:profiles!assigned_to(
+        id,
+        email,
+        full_name,
+        avatar_url,
+        role
+      )
+    `)
+    .single()
+  
+  if (error) return errorResponse(error.message)
+  
+  // Send notification if assignee changed
+  if (assigneeId && assigneeId !== currentTask.assigned_to) {
+    // TODO: Send email notification to new assignee
+  }
+  
+  revalidatePath(`/services/${currentTask.milestone?.service_id}`)
+  
+  return successResponse(data, 'Task assigned successfully')
+}
+
+// =====================================================
+// BULK ASSIGN TASKS
+// =====================================================
+export async function bulkAssignTasks(
+  taskIds: string[],
+  assigneeId: string | null,
+  visibility?: 'internal' | 'client'
+) {
+  if (!taskIds?.length) return errorResponse('Task IDs are required')
+  
+  const auth = await requireAuth(['admin', 'team_member'])
+  if (isAuthError(auth)) return errorResponse(auth.error)
+  
+  const { supabase } = auth
+  
+  // Determine visibility
+  let finalVisibility = visibility
+  if (!finalVisibility && assigneeId) {
+    const { data: assignee } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', assigneeId)
+      .single()
+    
+    finalVisibility = assignee?.role === 'client' ? 'client' : 'internal'
+  } else if (!finalVisibility) {
+    finalVisibility = 'internal'
+  }
+  
+  // Update all tasks
+  const { data, error } = await supabase
+    .from('tasks')
+    .update({
+      assigned_to: assigneeId,
+      visibility: finalVisibility,
+      updated_at: new Date().toISOString()
+    })
+    .in('id', taskIds)
+    .select()
+  
+  if (error) return errorResponse(error.message)
+  
+  // Get service IDs for revalidation
+  const { data: milestones } = await supabase
+    .from('tasks')
+    .select('milestone:milestones!inner(service_id)')
+    .in('id', taskIds)
+  
+  const serviceIds = Array.from(new Set(milestones?.map(m => m.milestone?.service_id).filter(Boolean) || []))
+  serviceIds.forEach(serviceId => revalidatePath(`/services/${serviceId}`))
+  
+  return successResponse(
+    { updated: data?.length || 0 },
+    `${data?.length || 0} tasks assigned successfully`
+  )
+}
+
+// =====================================================
+// GET TASKS BY VISIBILITY FOR CLIENT
+// =====================================================
+export async function getClientTasks(clientId?: string) {
+  const auth = await requireAuth()
+  if (isAuthError(auth)) return errorResponse(auth.error)
+  
+  const { supabase, user } = auth
+  
+  const targetClientId = clientId || (user.role === 'client' ? user.id : null)
+  if (!targetClientId) return errorResponse('Client ID required')
+  
+  // Get tasks that are either assigned to client or visible to clients
+  const { data, error } = await supabase
+    .from('tasks')
+    .select(`
+      *,
+      milestone:milestones!inner(
+        id,
+        name,
+        service:services!inner(
+          id,
+          name,
+          client_id
+        )
+      ),
+      assigned_to_profile:profiles!assigned_to(
+        id,
+        full_name,
+        avatar_url
+      )
+    `)
+    .or(`assigned_to.eq.${targetClientId},visibility.eq.client`)
+    .eq('milestone.service.client_id', targetClientId)
+    .order('created_at', { ascending: false })
+  
+  if (error) return errorResponse(error.message)
+  
+  return successResponse(data || [], 'Client tasks retrieved')
 }

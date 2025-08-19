@@ -26,8 +26,10 @@ import { MobileTaskList } from './mobile-task-list'
 import { updateTaskPosition } from '@/app/actions/tasks'
 import { useToast } from '@/shared/hooks/use-toast'
 import { useMobileDetectSSR } from '@/shared/hooks/use-mobile-detect'
+import { useServiceContext, useSelectedMilestone } from '@/shared/contexts/service-context'
+import { AssigneeAvatar } from '@/shared/components/ui/assignee-avatar'
 import { Button } from '@/shared/components/ui/button'
-import { Plus } from 'lucide-react'
+import { Plus, User } from 'lucide-react'
 
 const TASK_STATUSES = [
   { id: 'todo', label: 'To Do', color: 'gray' },
@@ -38,13 +40,17 @@ const TASK_STATUSES = [
 ]
 
 interface KanbanBoardProps {
-  milestones: any[]
-  serviceId: string
   showMilestoneTabs?: boolean
 }
 
-export function KanbanBoard({ milestones = [], serviceId, showMilestoneTabs = true }: KanbanBoardProps) {
-  const [activeMilestone, setActiveMilestone] = useState(milestones[0]?.id || null)
+export function KanbanBoard({ showMilestoneTabs = true }: KanbanBoardProps) {
+  const { 
+    selectedMilestoneId, 
+    setSelectedMilestoneId, 
+    milestones, 
+    serviceId 
+  } = useServiceContext()
+  const currentMilestone = useSelectedMilestone()
   const [activeTask, setActiveTask] = useState<any>(null)
   const [tasks, setTasks] = useState<any[]>([])
   const [mounted, setMounted] = useState(false)
@@ -67,8 +73,7 @@ export function KanbanBoard({ milestones = [], serviceId, showMilestoneTabs = tr
     })
   )
   
-  // Get current milestone and its tasks
-  const currentMilestone = milestones.find(m => m.id === activeMilestone)
+  // Tasks are updated from current milestone
   
   useEffect(() => {
     if (currentMilestone?.tasks) {
@@ -166,7 +171,7 @@ export function KanbanBoard({ milestones = [], serviceId, showMilestoneTabs = tr
           activeTask.id,
           targetStatus as any,
           targetPosition,
-          activeMilestone
+          selectedMilestoneId || undefined
         )
         
         if ('error' in result) {
@@ -219,9 +224,9 @@ export function KanbanBoard({ milestones = [], serviceId, showMilestoneTabs = tr
                 return (
                   <button
                     key={milestone.id}
-                    onClick={() => setActiveMilestone(milestone.id)}
+                    onClick={() => setSelectedMilestoneId(milestone.id)}
                     className={`px-4 py-2 font-medium text-sm rounded-lg transition-colors whitespace-nowrap ${
-                      activeMilestone === milestone.id
+                      selectedMilestoneId === milestone.id
                         ? 'bg-primary text-primary-foreground'
                         : 'bg-muted hover:bg-muted/80 text-muted-foreground'
                     }`}
@@ -242,7 +247,8 @@ export function KanbanBoard({ milestones = [], serviceId, showMilestoneTabs = tr
           {currentMilestone ? (
             <MobileTaskList
               tasks={currentMilestone.tasks || []}
-              milestoneId={activeMilestone}
+              milestoneId={selectedMilestoneId}
+              serviceId={serviceId || ''}
               teamMembers={[]} // TODO: Pass actual team members
             />
           ) : (
@@ -271,9 +277,9 @@ export function KanbanBoard({ milestones = [], serviceId, showMilestoneTabs = tr
               return (
                 <button
                   key={milestone.id}
-                  onClick={() => setActiveMilestone(milestone.id)}
+                  onClick={() => setSelectedMilestoneId(milestone.id)}
                   className={`px-4 py-2 font-medium text-sm rounded-lg transition-colors whitespace-nowrap ${
-                    activeMilestone === milestone.id
+                    selectedMilestoneId === milestone.id
                       ? 'bg-primary text-primary-foreground'
                       : 'bg-muted hover:bg-muted/80 text-muted-foreground'
                   }`}
@@ -292,28 +298,54 @@ export function KanbanBoard({ milestones = [], serviceId, showMilestoneTabs = tr
       {/* Kanban Board */}
       <div className="flex-1 overflow-hidden p-4 sm:p-6">
         {currentMilestone ? (
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCorners}
-            onDragStart={handleDragStart}
-            onDragOver={handleDragOver}
-            onDragEnd={handleDragEnd}
-          >
-            <div className="flex gap-4 h-full overflow-x-auto pb-4">
+          <>
+            {/* Milestone Header with Assignee */}
+            {!showMilestoneTabs && (
+              <div className="mb-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <h2 className="text-lg font-semibold">{currentMilestone.name}</h2>
+                  {(currentMilestone.assignee_profile || currentMilestone.assignee) && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-muted-foreground">Assignee:</span>
+                      <AssigneeAvatar
+                        user={currentMilestone.assignee_profile || currentMilestone.assignee}
+                        size="sm"
+                        showName={true}
+                        showTooltip={false}
+                      />
+                    </div>
+                  )}
+                </div>
+                {currentMilestone.description && (
+                  <p className="text-sm text-muted-foreground max-w-md">{currentMilestone.description}</p>
+                )}
+              </div>
+            )}
+            
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCorners}
+              onDragStart={handleDragStart}
+              onDragOver={handleDragOver}
+              onDragEnd={handleDragEnd}
+            >
+              <div className="flex gap-4 h-full overflow-x-auto pb-4">
               {TASK_STATUSES.map(status => (
                 <TaskColumn
                   key={status.id}
                   status={status}
                   tasks={tasksByStatus[status.id] || []}
-                  milestoneId={activeMilestone}
+                  milestoneId={selectedMilestoneId}
+                  serviceId={serviceId || ''}
                 />
               ))}
             </div>
             
-            <DragOverlay>
-              {activeTask && <TaskCard task={activeTask} isDragging />}
-            </DragOverlay>
-          </DndContext>
+              <DragOverlay>
+                {activeTask && <TaskCard task={activeTask} isDragging serviceId={serviceId} />}
+              </DragOverlay>
+            </DndContext>
+          </>
         ) : (
           <div className="flex items-center justify-center h-full">
             <p className="text-muted-foreground">Select a milestone to view tasks</p>
