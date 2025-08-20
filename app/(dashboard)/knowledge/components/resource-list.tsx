@@ -4,7 +4,8 @@ import { useState } from 'react'
 import { deleteResource } from '@/app/actions/knowledge'
 import { Button } from '@/shared/components/ui/button'
 import { Card } from '@/shared/components/ui/card'
-import { FileText, Video, File, Download, Trash2, ExternalLink } from 'lucide-react'
+import { VideoPlayer } from '@/shared/components/ui/video-player'
+import { FileText, Video, File, Download, Trash2, ExternalLink, BookOpen, Edit } from 'lucide-react'
 import { formatDate } from '@/shared/lib/format-date'
 import { useToast } from '@/shared/hooks/use-toast'
 import {
@@ -22,6 +23,7 @@ interface Resource {
   id: string
   title: string
   description?: string | null
+  rich_description?: object | null
   type: string
   content_url: string
   file_name?: string | null
@@ -33,9 +35,10 @@ interface Resource {
 interface ResourceListProps {
   resources: Resource[]
   isAdmin: boolean
+  onEdit?: (resource: Resource) => void
 }
 
-export function ResourceList({ resources, isAdmin }: ResourceListProps) {
+export function ResourceList({ resources, isAdmin, onEdit }: ResourceListProps) {
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [loading, setLoading] = useState<string | null>(null)
   const { toast } = useToast()
@@ -69,6 +72,8 @@ export function ResourceList({ resources, isAdmin }: ResourceListProps) {
         return <FileText className="h-5 w-5" />
       case 'video':
         return <Video className="h-5 w-5" />
+      case 'note':
+        return <BookOpen className="h-5 w-5" />
       default:
         return <File className="h-5 w-5" />
     }
@@ -93,60 +98,94 @@ export function ResourceList({ resources, isAdmin }: ResourceListProps) {
     <>
       <div className="grid gap-4">
         {resources.map((resource) => (
-          <Card key={resource.id} className="p-4">
-            <div className="flex items-start justify-between">
-              <div className="flex items-start space-x-3 flex-1">
-                <div className="mt-1">{getIcon(resource.type)}</div>
-                <div className="flex-1">
-                  <h3 className="font-medium">{resource.title}</h3>
-                  {resource.description && (
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {resource.description}
-                    </p>
-                  )}
-                  <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-                    <span>{formatDate(resource.created_at)}</span>
-                    {resource.file_size && (
-                      <span>{formatFileSize(resource.file_size)}</span>
+          <Card key={resource.id} className="overflow-hidden">
+            {/* Video preview for video resources */}
+            {resource.type === 'video' && resource.content_url && (
+              <div className="aspect-video">
+                <VideoPlayer 
+                  src={resource.content_url}
+                  title={resource.title}
+                  className="w-full h-full"
+                />
+              </div>
+            )}
+
+            <div className="p-4">
+              <div className="flex items-start justify-between">
+                <div className="flex items-start space-x-3 flex-1">
+                  <div className="mt-1">{getIcon(resource.type)}</div>
+                  <div className="flex-1">
+                    <h3 className="font-medium">{resource.title}</h3>
+                    
+                    {/* Simple description display */}
+                    {resource.description && (
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {resource.description}
+                      </p>
                     )}
-                    {resource.file_name && (
-                      <span className="truncate max-w-[200px]">{resource.file_name}</span>
-                    )}
+                    
+                    {/* Metadata */}
+                    <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
+                      <span>{formatDate(resource.created_at)}</span>
+                      <span className="capitalize">{resource.type}</span>
+                      {resource.file_size && (
+                        <span>{formatFileSize(resource.file_size)}</span>
+                      )}
+                      {resource.file_name && (
+                        <span className="truncate max-w-[200px]">{resource.file_name}</span>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-              
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  asChild
-                >
-                  <a href={resource.content_url} target="_blank" rel="noopener noreferrer">
-                    <ExternalLink className="h-4 w-4" />
-                  </a>
-                </Button>
                 
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  asChild
-                >
-                  <a href={resource.content_url} download={resource.file_name}>
-                    <Download className="h-4 w-4" />
-                  </a>
-                </Button>
-                
-                {isAdmin && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setDeleteId(resource.id)}
-                    disabled={loading === resource.id}
-                  >
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
-                )}
+                <div className="flex items-center gap-2">
+                  {/* Only show file actions for file-based resources */}
+                  {resource.content_url && resource.type !== 'note' && (
+                    <>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        asChild
+                      >
+                        <a href={resource.content_url} target="_blank" rel="noopener noreferrer">
+                          <ExternalLink className="h-4 w-4" />
+                        </a>
+                      </Button>
+                      
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        asChild
+                      >
+                        <a href={resource.content_url} download={resource.file_name}>
+                          <Download className="h-4 w-4" />
+                        </a>
+                      </Button>
+                    </>
+                  )}
+                  
+                  {isAdmin && (
+                    <>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onEdit?.(resource)}
+                        disabled={loading === resource.id}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setDeleteId(resource.id)}
+                        disabled={loading === resource.id}
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
           </Card>

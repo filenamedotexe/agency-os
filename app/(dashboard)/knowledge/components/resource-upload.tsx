@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { createResource } from '@/app/actions/knowledge'
 import { Button } from '@/shared/components/ui/button'
 import { Input } from '@/shared/components/ui/input'
-import { Textarea } from '@/shared/components/ui/textarea'
+import { RichTextEditor } from '@/shared/components/ui/rich-text-editor'
 import {
   Dialog,
   DialogContent,
@@ -13,28 +13,43 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/shared/components/ui/dialog'
-import { Plus, Upload, Loader2 } from 'lucide-react'
+import { Plus, Upload, Loader2, FileText, File as FileIcon } from 'lucide-react'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select'
 import { useToast } from '@/shared/hooks/use-toast'
 
 interface ResourceUploadProps {
   collectionId: string
+  userRole?: 'admin' | 'team_member' | 'client'
 }
 
-export function ResourceUpload({ collectionId }: ResourceUploadProps) {
+export function ResourceUpload({ collectionId, userRole = 'client' }: ResourceUploadProps) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
+  const [richDescription, setRichDescription] = useState('')
   const [file, setFile] = useState<File | null>(null)
+  const [resourceType, setResourceType] = useState<'file' | 'note'>('note')
   const { toast } = useToast()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!file) {
+    
+    // Validation - either need file OR rich content for note type
+    if (resourceType === 'file' && !file) {
       toast({
         title: "Error",
         description: "Please select a file",
+        variant: "destructive"
+      })
+      return
+    }
+    
+    if (resourceType === 'note' && !title.trim()) {
+      toast({
+        title: "Error", 
+        description: "Please provide a title for the note",
         variant: "destructive"
       })
       return
@@ -44,45 +59,53 @@ export function ResourceUpload({ collectionId }: ResourceUploadProps) {
     setUploadProgress(10)
 
     try {
-      // Upload file to storage
-      const formData = new FormData()
-      formData.append('file', file)
-      formData.append('collectionId', collectionId)
+      let uploadResult = null
+      let fileType: 'document' | 'video' | 'file' | 'note' = resourceType === 'note' ? 'note' : 'file'
       
-      setUploadProgress(30)
-      
-      const uploadResponse = await fetch('/api/knowledge/upload', {
-        method: 'POST',
-        body: formData
-      })
-      
-      setUploadProgress(70)
-      
-      if (!uploadResponse.ok) {
-        throw new Error('Upload failed')
+      // Only upload file if we have one
+      if (file && resourceType === 'file') {
+        const formData = new FormData()
+        formData.append('file', file)
+        formData.append('collectionId', collectionId)
+        
+        setUploadProgress(30)
+        
+        const uploadResponse = await fetch('/api/knowledge/upload', {
+          method: 'POST',
+          body: formData
+        })
+        
+        setUploadProgress(70)
+        
+        if (!uploadResponse.ok) {
+          throw new Error('Upload failed')
+        }
+        
+        uploadResult = await uploadResponse.json()
+        
+        // Detect file type
+        if (file.type.startsWith('video/')) {
+          fileType = 'video'
+        } else if (file.type.includes('pdf') || file.type.includes('document')) {
+          fileType = 'document'
+        } else {
+          fileType = 'file'
+        }
       }
       
-      const uploadResult = await uploadResponse.json()
       setUploadProgress(90)
-      
-      // Detect file type
-      let fileType: 'document' | 'video' | 'file' = 'file'
-      if (file.type.startsWith('video/')) {
-        fileType = 'video'
-      } else if (file.type.includes('pdf') || file.type.includes('document')) {
-        fileType = 'document'
-      }
       
       // Create resource in database
       const result = await createResource({
         collection_id: collectionId,
-        title: title || file.name.replace(/\.[^/.]+$/, ''),
+        title: title || (file ? file.name.replace(/\.[^/.]+$/, '') : 'Untitled Note'),
         description: description || undefined,
+        rich_description: richDescription || undefined,
         type: fileType,
-        content_url: uploadResult.url,
-        file_name: file.name,
-        file_size: file.size,
-        mime_type: file.type
+        content_url: uploadResult?.url || null,
+        file_name: file?.name || null,
+        file_size: file?.size || null,
+        mime_type: file?.type || null
       })
       
       setUploadProgress(100)
@@ -99,7 +122,9 @@ export function ResourceUpload({ collectionId }: ResourceUploadProps) {
       // Reset form
       setTitle('')
       setDescription('')
+      setRichDescription('')
       setFile(null)
+      setResourceType('note')
       setOpen(false)
       
     } catch (error) {
@@ -127,38 +152,74 @@ export function ResourceUpload({ collectionId }: ResourceUploadProps) {
         <DialogHeader>
           <DialogTitle>Add Resource</DialogTitle>
           <DialogDescription>
-            Upload a file to this collection
+            Create a rich text note or upload a file to this collection
           </DialogDescription>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="text-sm font-medium">File</label>
-            <Input
-              type="file"
-              onChange={(e) => setFile(e.target.files?.[0] || null)}
-              disabled={loading}
-              required
-            />
+            <label className="text-sm font-medium mb-2 block">Resource Type</label>
+            <Select value={resourceType} onValueChange={(value: 'file' | 'note') => setResourceType(value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select resource type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="note">
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-4 w-4" />
+                    Rich Text Note
+                  </div>
+                </SelectItem>
+                <SelectItem value="file">
+                  <div className="flex items-center gap-2">
+                    <FileIcon className="h-4 w-4" />
+                    File Upload
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
           </div>
+
+          {resourceType === 'file' && (
+            <div>
+              <label className="text-sm font-medium">File</label>
+              <Input
+                type="file"
+                onChange={(e) => setFile(e.target.files?.[0] || null)}
+                disabled={loading}
+                accept="*/*"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Supports all file types including videos, documents, images, etc.
+              </p>
+            </div>
+          )}
           
           <div>
-            <label className="text-sm font-medium">Title (optional)</label>
+            <label className="text-sm font-medium">
+              Title {resourceType === 'note' ? '(required)' : '(optional)'}
+            </label>
             <Input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Leave empty to use filename"
+              placeholder={resourceType === 'note' ? 'Enter note title' : 'Leave empty to use filename'}
               disabled={loading}
+              required={resourceType === 'note'}
             />
           </div>
           
           <div>
-            <label className="text-sm font-medium">Description (optional)</label>
-            <Textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Brief description of the resource"
-              disabled={loading}
+            <label className="text-sm font-medium">
+              {resourceType === 'note' ? 'Content' : 'Description (optional)'}
+            </label>
+            <RichTextEditor
+              content={richDescription}
+              onChange={setRichDescription}
+              placeholder={resourceType === 'note' ? 'Start writing your note...' : 'Brief description of the resource'}
+              editable={!loading}
+              minimal={resourceType === 'file'}
+              userRole={userRole}
+              className={resourceType === 'note' ? 'min-h-[300px]' : 'min-h-[120px]'}
             />
           </div>
           
@@ -171,16 +232,29 @@ export function ResourceUpload({ collectionId }: ResourceUploadProps) {
             </div>
           )}
           
-          <Button type="submit" disabled={loading || !file} className="w-full">
+          <Button 
+            type="submit" 
+            disabled={loading || (resourceType === 'file' && !file) || (resourceType === 'note' && !title.trim())} 
+            className="w-full"
+          >
             {loading ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Uploading...
+                {resourceType === 'file' ? 'Uploading...' : 'Creating...'}
               </>
             ) : (
               <>
-                <Upload className="h-4 w-4 mr-2" />
-                Upload Resource
+                {resourceType === 'file' ? (
+                  <>
+                    <Upload className="h-4 w-4 mr-2" />
+                    Upload Resource
+                  </>
+                ) : (
+                  <>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create Note
+                  </>
+                )}
               </>
             )}
           </Button>

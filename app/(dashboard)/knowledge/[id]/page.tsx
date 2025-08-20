@@ -1,12 +1,11 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/shared/lib/supabase/server'
 import { getCollection } from '@/app/actions/knowledge'
-import { ResourceList } from '../components/resource-list'
-import { ResourceUpload } from '../components/resource-upload'
+import { KnowledgeCollectionClient } from '../components/knowledge-collection-client'
 import { Button } from '@/shared/components/ui/button'
 import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
-import { PageLayout, PageHeader, PageContent } from '@/shared/components/layout/page-layout'
+import { PageLayout, PageContent } from '@/shared/components/layout/page-layout'
 
 export default async function CollectionPage({
   params
@@ -52,32 +51,24 @@ export default async function CollectionPage({
     )
   }
   
-  const resourceCount = collection.resources?.length || 0
+  // const resourceCount = collection.resources?.length || 0
   
   return (
     <PageLayout>
-      <PageHeader
-        title={collection.name}
-        subtitle={collection.description}
-        description={`${resourceCount} resource${resourceCount === 1 ? '' : 's'}`}
-      />
-      
       <PageContent>
-        <div className="mb-6 flex items-center justify-between">
+        <div className="mb-6">
           <Button variant="ghost" asChild>
             <Link href="/knowledge">
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Back
+              Back to Knowledge Hub
             </Link>
           </Button>
-          
-          {isAdmin && <ResourceUpload collectionId={collection.id} />}
         </div>
         
-        <ResourceList 
-          resources={collection.resources || []} 
-          collectionId={collection.id}
+        <KnowledgeCollectionClient
+          collection={collection}
           isAdmin={isAdmin}
+          userRole={profile.role as 'admin' | 'team_member' | 'client'}
         />
       </PageContent>
     </PageLayout>

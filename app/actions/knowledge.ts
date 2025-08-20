@@ -44,7 +44,7 @@ export async function getCollection(collectionId: string) {
   // Get resources - simplified query
   const { data: resources, error: resourcesError } = await supabase
     .from('resources')
-    .select('*')
+    .select('*, rich_description')
     .eq('collection_id', collectionId)
     .order('created_at', { ascending: false })
   
@@ -97,16 +97,17 @@ export async function createCollection(data: {
   return { collection }
 }
 
-// Create resource - simplified
+// Create resource - enhanced to support notes and optional files
 export async function createResource(data: {
   collection_id: string
   title: string
   description?: string
-  type: 'document' | 'video' | 'file'
-  content_url: string
-  file_name?: string
-  file_size?: number
-  mime_type?: string
+  rich_description?: string
+  type: 'document' | 'video' | 'file' | 'note'
+  content_url?: string | null
+  file_name?: string | null
+  file_size?: number | null
+  mime_type?: string | null
 }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -124,6 +125,26 @@ export async function createResource(data: {
     return { error: 'Unauthorized' }
   }
   
+  // Parse rich description if provided
+  let richDescriptionJson = null
+  if (data.rich_description) {
+    try {
+      richDescriptionJson = JSON.parse(data.rich_description)
+    } catch (e) {
+      // If parsing fails, treat as plain text and convert
+      richDescriptionJson = {
+        type: 'doc',
+        content: [{
+          type: 'paragraph',
+          content: [{
+            type: 'text',
+            text: data.rich_description
+          }]
+        }]
+      }
+    }
+  }
+
   // Use service client to bypass RLS for insert
   const serviceClient = createServiceClient()
   const { data: resource, error } = await serviceClient
@@ -132,6 +153,7 @@ export async function createResource(data: {
       collection_id: data.collection_id,
       title: data.title,
       description: data.description,
+      rich_description: richDescriptionJson,
       type: data.type,
       content_url: data.content_url,
       file_name: data.file_name,
@@ -254,6 +276,80 @@ export async function deleteCollection(collectionId: string) {
   
   revalidatePath('/knowledge')
   return { success: true }
+}
+
+// Update resource
+export async function updateResource(
+  resourceId: string,
+  data: {
+    title?: string
+    description?: string
+    rich_description?: string
+  }
+) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  
+  if (!user) return { error: 'Not authenticated' }
+  
+  // Check if admin/team
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+  
+  if (!profile || !['admin', 'team_member'].includes(profile.role)) {
+    return { error: 'Unauthorized' }
+  }
+  
+  // Parse rich description if provided
+  let richDescriptionJson = null
+  if (data.rich_description) {
+    try {
+      richDescriptionJson = JSON.parse(data.rich_description)
+    } catch (e) {
+      // If parsing fails, treat as plain text and convert
+      richDescriptionJson = {
+        type: 'doc',
+        content: [{
+          type: 'paragraph',
+          content: [{
+            type: 'text',
+            text: data.rich_description
+          }]
+        }]
+      }
+    }
+  }
+
+  // Use service client to bypass RLS for update
+  const serviceClient = createServiceClient()
+  const { data: resource, error } = await serviceClient
+    .from('resources')
+    .update({
+      title: data.title,
+      description: data.description,
+      rich_description: richDescriptionJson,
+    })
+    .eq('id', resourceId)
+    .select()
+    .single()
+  
+  if (error) return { error: error.message }
+  
+  // Get collection_id for revalidation
+  const { data: resourceData } = await supabase
+    .from('resources')
+    .select('collection_id')
+    .eq('id', resourceId)
+    .single()
+  
+  if (resourceData) {
+    revalidatePath(`/knowledge/${resourceData.collection_id}`)
+  }
+  
+  return { resource }
 }
 
 // Track resource access (stub for compatibility)
