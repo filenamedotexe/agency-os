@@ -19,6 +19,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
+  useSidebar,
 } from "@/shared/components/ui/sidebar"
 import { designSystem as ds } from "@/shared/lib/design-system"
 import {
@@ -94,6 +95,7 @@ export function AppSidebar({ userRole, user }: AppSidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
   const { toast } = useToast()
+  const { setOpenMobile, isMobile } = useSidebar()
   const supabase = createClient()
 
   const handleSignOut = async () => {
@@ -112,6 +114,13 @@ export function AppSidebar({ userRole, user }: AppSidebarProps) {
       })
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const handleNavClick = () => {
+    // Close mobile menu when navigation link is clicked
+    if (isMobile) {
+      setOpenMobile(false)
     }
   }
 
@@ -165,7 +174,7 @@ export function AppSidebar({ userRole, user }: AppSidebarProps) {
                       isActive={isActive}
                       tooltip={item.title}
                     >
-                      <Link href={item.url}>
+                      <Link href={item.url} onClick={handleNavClick}>
                         <Icon className="h-4 w-4" />
                         <span>{item.title}</span>
                       </Link>
