@@ -28,7 +28,7 @@ import {
 import { Button } from './button'
 import { Separator } from './separator'
 import { cn } from '@/shared/lib/utils'
-import { Toggle } from '@/components/ui/toggle'
+import { Toggle } from './toggle'
 import { useCallback } from 'react'
 
 interface RichTextEditorProps {
