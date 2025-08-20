@@ -13,11 +13,9 @@ import {
   CheckCircle2, 
   Clock, 
   AlertCircle,
-  ChevronRight,
   Edit,
   Trash2,
-  GripVertical,
-  User
+  GripVertical
 } from 'lucide-react'
 import { formatDate } from '@/shared/lib/format-date'
 import { createMilestone, updateMilestoneStatus, deleteMilestone } from '@/app/actions/milestones'

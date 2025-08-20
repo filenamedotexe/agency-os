@@ -15,10 +15,7 @@ import {
   DragOverEvent
 } from '@dnd-kit/core'
 import {
-  arrayMove,
-  SortableContext,
   sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { TaskColumn } from './task-column'
 import { TaskCard } from './task-card'
@@ -28,8 +25,7 @@ import { useToast } from '@/shared/hooks/use-toast'
 import { useMobileDetectSSR } from '@/shared/hooks/use-mobile-detect'
 import { useServiceContext, useSelectedMilestone } from '@/shared/contexts/service-context'
 import { AssigneeAvatar } from '@/shared/components/ui/assignee-avatar'
-import { Button } from '@/shared/components/ui/button'
-import { Plus, User } from 'lucide-react'
+import { Plus } from 'lucide-react'
 
 const TASK_STATUSES = [
   { id: 'todo', label: 'To Do', color: 'gray' },

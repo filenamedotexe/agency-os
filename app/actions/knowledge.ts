@@ -130,7 +130,7 @@ export async function createResource(data: {
   if (data.rich_description) {
     try {
       richDescriptionJson = JSON.parse(data.rich_description)
-    } catch (e) {
+    } catch {
       // If parsing fails, treat as plain text and convert
       richDescriptionJson = {
         type: 'doc',
@@ -308,7 +308,7 @@ export async function updateResource(
   if (data.rich_description) {
     try {
       richDescriptionJson = JSON.parse(data.rich_description)
-    } catch (e) {
+    } catch {
       // If parsing fails, treat as plain text and convert
       richDescriptionJson = {
         type: 'doc',
@@ -353,7 +353,7 @@ export async function updateResource(
 }
 
 // Track resource access (stub for compatibility)
-export async function trackResourceAccess(resourceId: string, action: 'view' | 'download') {
+export async function trackResourceAccess(_resourceId: string, _action: 'view' | 'download') {
   // Simplified - no tracking in the new system
   return { success: true }
 }

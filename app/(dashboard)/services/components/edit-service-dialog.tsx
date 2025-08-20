@@ -24,8 +24,16 @@ import {
   SelectValue,
 } from '@/shared/components/ui/select'
 
+interface Service {
+  id: string
+  name: string
+  description?: string
+  client_id?: string
+  status: string
+}
+
 interface EditServiceDialogProps {
-  service: any
+  service: Service | null
   open: boolean
   onOpenChange: (open: boolean) => void
 }
